@@ -1,0 +1,37 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies
+**/node_modules
+
+# Build outputs
+**/dist
+**/build
+**/.next
+**/.turbo
+
+# Test files
+**/coverage
+**/__tests__
+**/*.test.*
+**/*.spec.*
+
+# IDE and editor files
+.idea
+.vscode
+*.swp
+*.swo
+
+# Logs
+**/logs
+**/*.log
+npm-debug.log*
+
+# Other unnecessary files
+**/.DS_Store
+**/README.md
+**/LICENSE
+*.md
+gha-creds-*.json
+

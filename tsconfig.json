@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/api-common"
+    },
+    {
+      "path": "./packages/models"
+    },
+    {
+      "path": "./packages/ng-common"
+    },
+    {
+      "path": "./apps/api"
+    },
+    {
+      "path": "./apps/client"
+    }
+  ]
+}

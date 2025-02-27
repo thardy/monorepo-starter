@@ -1,0 +1,10 @@
+{
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "exec": "tsx src/index.ts",
+  "events": {
+    "restart": "echo \"[nodemon] App restarted due to changes\""
+  },
+  "delay": "500"
+} 

@@ -1,4 +1,4 @@
-import {IApiError} from '@meritas-digital/risk-answer-models';
+import {IApiError} from '../models/api-error.interface.js';
 
 export abstract class CustomError extends Error {
   abstract statusCode: number;

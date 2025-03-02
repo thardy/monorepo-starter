@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monorepo-starter-ingress-service
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+spec:
+  rules:
+    - host: monorepo-starter.local # kustomize will replace this value with the value specified in the <env>/kustomization.yaml file
+      http:
+        paths:
+          - path: /api # any path beginning with '/api' will get routed to the monorepo-starter-api-svc:4000
+            pathType: Prefix
+            backend:
+              service:
+                name: monorepo-starter-api-svc
+                port:
+                  number: 4000
+          - path: / # anything hitting the root of monorepo-starter.local '/' will get routed to monorepo-starter-client-svc:4000
+            pathType: Prefix
+            backend:
+              service:
+                name: monorepo-starter-client-svc
+                port:
+                  number: 4000
+

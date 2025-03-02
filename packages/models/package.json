@@ -1,5 +1,5 @@
 {
-  "name": "@my-org/models",
+  "name": "@monorepo-starter/models",
   "version": "0.0.1",
   "private": false,
   "description": "common models, interfaces, and types",

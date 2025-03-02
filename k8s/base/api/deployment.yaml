@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monorepo-starter-api-deployment
+  labels:
+    app: monorepo-starter-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: monorepo-starter-api
+  template:
+    metadata:
+      labels:
+        app: monorepo-starter-api
+    spec:
+      initContainers:
+        - name: init-db
+          image: busybox:1.31
+          command: [ 'sh', '-c', 'echo -e "Checking for the availability of MongoDB Server deployment"; while ! nc -z monorepo-starter-mongodb-svc 27017; do sleep 1; printf "-"; done; echo -e "  >> MongoDB Server has started";' ]
+      containers:
+        - name: monorepo-starter-api
+          # this is what we use locally with skaffold - we don't use versions in the base because this image is never published anywhere.
+          image: monorepo-starter/api
+          ports:
+            - containerPort: 4000 # External port. Without this, no health check is created from the readiness probe in gke, and it doesn't change the behavior locally
+            - containerPort: 8083 # Internal port. 

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monorepo-starter-mongo-init-configmap
+data:
+  mongo-create-api-user.js: |
+    db.createUser({
+      user: "apiUser",
+      pwd: "testuser",
+      roles: [{ role: "readWrite", db: "monorepoStarter" }]
+    });
+  mongo-init.js: |
+    // mongo-init.js
+    //
+    //
+    // ***** products ****************************************
+    db.createCollection('products', {});
+    
+    
+    // ***** users ****************************************
+    db.createCollection('users', {});
+    // Case-insensitive index
+    db.users.createIndex({ "email": 1 }, { unique: true, collation: { locale: 'en', strength: 1 }});
+
+

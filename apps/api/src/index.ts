@@ -34,7 +34,7 @@ const startServer = async () => {
 
   if (db) {
     externalApp.listen(config.port, () => {
-      console.log(`risk-answers-api listening on port ${config.port} (${config.env})!!!`);
+      console.log(`monorepo-starter-api listening on port ${config.port} (${config.env})!!!`);
     });
   }
   else {
@@ -50,7 +50,7 @@ const checkForRequiredConfigValues = () => {
 
 // ******** Shutdown Cleanup Begin ********
 const cleanup = async (event: any) => {
-  console.log(`risk-answers-api server stopping due to ${event} event. running cleanup...`);
+  console.log(`monorepo-starter-api server stopping due to ${event} event. running cleanup...`);
   // clean stuff up here
   if (db) {
     console.log('closing mongodb connection');

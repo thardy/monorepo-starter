@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: monorepo-starter-api-svc
+  labels:
+    app: monorepo-starter-api
+spec:
+  type: ClusterIP
+  selector:
+    app: monorepo-starter-api
+  ports:
+    - name: monorepo-starter-api-port
+      protocol: TCP
+      port: 4000 # the external facing port of the Service
+      targetPort: 4000 # where traffic will be directed inside the pod - where the application is listening
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: monorepo-starter-api-internal-svc
+  namespace: default
+  labels:
+    app: monorepo-starter-api
+spec:
+  type: ClusterIP
+  selector:
+    app: monorepo-starter-api
+  ports:
+    - name: monorepo-starter-api-internal-port
+      protocol: TCP
+      port: 8083
+      targetPort: 8083 

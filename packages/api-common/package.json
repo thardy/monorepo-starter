@@ -1,5 +1,5 @@
 {
-  "name": "@my-org/api-common",
+  "name": "@monorepo-starter/api-common",
   "version": "0.0.1",
   "private": false,
   "description": "common code for Node.js APIs",
@@ -30,7 +30,7 @@
     "./utils": "./dist/utils/index.js"
   },
   "dependencies": {
-    "@my-org/models": "*"
+    "@monorepo-starter/models": "*"
   },
   "peerDependencies": {
     "@types/express": "^4.17.21",

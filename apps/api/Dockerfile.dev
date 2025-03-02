@@ -1,0 +1,49 @@
+# alwyas use slim and the lastest debian distro offered
+FROM node:20.15.1-bookworm-slim AS base
+
+
+FROM base AS pruner
+# add user first, then set WORKDIR to set permissions
+WORKDIR /app
+RUN npm install -g turbo
+# Create the out directory with proper permissions before switching to node user
+RUN mkdir -p /app/out/api && chown -R node:node /app
+# copy the entire monorepo with correct permissions
+COPY --chown=node:node . .
+USER node
+# Prune only the @monorepo-starter/api application - places in /out folder
+RUN turbo prune @monorepo-starter/api --docker --out-dir ./out/api
+
+
+# Add pruned lockfile and package.json's of isolated subworkspace
+FROM base AS installer
+WORKDIR /app
+# Copy over the pruned package.json files and lockfile
+COPY --from=pruner /app/out/api/json/ .
+COPY --from=pruner /app/out/api/package-lock.json .
+COPY --from=pruner /app/tsconfig.base.json .
+COPY --from=pruner /app/nx.json .
+# Copy .env file directly from source
+COPY apps/api/.env ./apps/api/.env
+# First install the dependencies (as they change less often)
+RUN npm ci && npm cache clean --force
+
+# Copy all source required for this specific app
+COPY --from=pruner /app/out/api/full/ .
+
+# Build the shared local workspace packages
+# RUN cd packages/risk-answer-models && npm run build && \
+#     cd ../api-common && npm run build
+
+
+FROM base AS runner
+EXPOSE 4000
+USER node
+WORKDIR /app
+COPY --chown=node:node --from=installer /app .
+
+WORKDIR /app/apps/api
+# temp step to keep the container running for manual debugging
+#CMD ["tail", "-f", "/dev/null"] 
+CMD ["npm", "start"]
+

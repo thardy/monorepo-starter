@@ -1,4 +1,4 @@
-import {IQueryOptions, Filter} from '@meritas-digital/risk-answer-models';
+import {IQueryOptions, Filter} from '../models/query-options.model.js';
 import {stringUtils} from './string.utils.js';
 import {ObjectId} from 'mongodb';
 import {entityUtils} from './entity.utils.js';

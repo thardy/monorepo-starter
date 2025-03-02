@@ -1,13 +1,10 @@
 import {Request, Response} from 'express';
-import {
-	IApiResponse,
-	IApiError,
-	IQueryOptions,
-	QueryOptions,
-	IPagedResult,
-	Filter
-} from '@meritas-digital/risk-answer-models';
-import {SortDirection} from '@meritas-digital/risk-answer-models/types';
+import {IApiResponse} from '../models/api-response.interface.js';
+import {IQueryOptions, Filter} from '../models/query-options.model.js';
+import {QueryOptions} from '../models/query-options.model.js';
+import {IPagedResult} from '../models/paged-result.interface.js';
+import {SortDirection} from '../models/types/index.js';
+import {IApiError} from '../models/api-error.interface.js';
 
 export interface IApiResponseOptions<T> {
 	messages?: string[];

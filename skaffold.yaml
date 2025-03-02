@@ -1,0 +1,33 @@
+apiVersion: skaffold/v4beta12
+kind: Config
+manifests:
+  kustomize:
+    paths:
+      - ./k8s/base # skaffold uses kustomize to build the base yaml files, which should be configured to run locally
+build:
+  local:
+    push: false
+  artifacts:
+    - image: monorepo-starter/api
+      context: .
+      custom:
+        buildCommand: "sh build-api.sh"
+        dependencies:
+          paths:
+            - apps/api/**/*
+          ignore:
+            - apps/api/**/*.test.ts
+            - apps/api/**/*.spec.ts
+            - apps/api/**/__tests__/**
+      sync:
+        manual:
+          - src: 'apps/api/src/**/*.ts'
+            dest: '/app/apps/api/src'
+            strip: 'apps/api/src/'
+          - src: 'apps/api/src/**/*.json'
+            dest: '/app/apps/api/src'
+            strip: 'apps/api/src/'
+          - src: 'apps/api/.env'
+            dest: '/app/apps/api'
+            strip: 'apps/api/'
+    

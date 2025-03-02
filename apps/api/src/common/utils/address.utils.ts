@@ -1,4 +1,4 @@
-import {IAddress} from '@meritas-digital/risk-answer-models';
+import {IAddress} from '../models/address.interface.js';
 
 function getSingleLineAddress(address: IAddress): string {
 	// create street from appliedClient.address.streets array

@@ -12,7 +12,7 @@
     }
   },
   "dependencies": [
-    "@my-org/api-common",
-    "@my-org/models"
+    "@monorepo-starter/api-common",
+    "@monorepo-starter/models"
   ]
 } 

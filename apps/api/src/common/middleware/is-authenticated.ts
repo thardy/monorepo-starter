@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import {IUserContext} from '@meritas-digital/risk-answer-models';
+import {IUserContext} from '../models/user-context.interface.js';
 import {UnauthenticatedError} from '../errors/index.js';
 import {JwtService} from '../services/index.js';
 import {config} from '../config/index.js';

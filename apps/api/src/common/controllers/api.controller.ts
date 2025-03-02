@@ -1,6 +1,7 @@
 import {Application, NextFunction, Request, Response} from 'express';
 import {IGenericApiService} from '../services/index.js';
-import {IEntity, IPagedResult} from '@meritas-digital/risk-answer-models';
+import {IEntity} from '#common/models/entity.interface';
+import {IPagedResult} from '#common/models/paged-result.interface';
 
 import {isAuthenticated} from '../middleware/index.js';
 import {apiUtils} from '../utils/index.js';

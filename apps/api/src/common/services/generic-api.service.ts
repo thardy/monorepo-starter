@@ -1,11 +1,16 @@
 import {Db, Collection, ObjectId, DeleteResult, Document, FindOptions} from 'mongodb';
 import moment from 'moment';
-import Joi from 'joi';
+//import Joi from 'joi';
 import _ from 'lodash';
 import {BadRequestError, DuplicateKeyError, IdNotFoundError, NotFoundError} from '../errors/index.js';
 
 import {IGenericApiService} from './generic-api-service.interface.js';
-import {IAuditable, IUserContext, IEntity, QueryOptions, IPagedResult} from '@meritas-digital/risk-answer-models';
+import {IAuditable} from '../models/auditable.interface.js';
+import {IUserContext} from '../models/user-context.interface.js';
+import {IEntity} from '../models/entity.interface.js';
+import {QueryOptions} from '../models/query-options.model.js';
+import {IPagedResult} from '../models/paged-result.interface.js';
+
 import {entityUtils, apiUtils, dbUtils} from '../utils/index.js';
 
 // todo: Enforce multi-tenancy on everything here

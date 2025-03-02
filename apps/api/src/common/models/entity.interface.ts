@@ -1,12 +1,10 @@
-import Joi from 'joi';
-
 export interface IEntity {
-  id?: string,
+  id: string,
   orgId?: string;
 }
 
-export const EntityValidationSchema = Joi.object().keys({
-	id: Joi.string(),
-	orgId: Joi.string(),
-});
+// export const EntityValidationSchema = Joi.object().keys({
+// 	id: Joi.string(),
+// 	orgId: Joi.string(),
+// });
 

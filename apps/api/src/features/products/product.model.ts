@@ -1,12 +1,23 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types, ObjectId } from 'mongoose';
 import { IEntity } from "#root/src/common/models/entity.interface";
 import { IAuditable } from "#root/src/common/models/auditable.interface";
 
 export interface IProduct extends IEntity, IAuditable {
   name: string;
-  description: string;
+  description?: string;
   price: number;
+  quantity: number;
 }
+
+const productSchema = new Schema<IProduct>({
+  name: { type: String, required: true },
+  description: { type: String, required: false },
+  price: { type: Number, required: true },
+  quantity: { type: Number, required: true },
+});
+
+export const Product = mongoose.model<IProduct>('Product', productSchema);
+
 
 
 // todo: Do this stuff above!!!!

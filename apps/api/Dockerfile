@@ -35,7 +35,7 @@ RUN npx nx build:prod @monorepo-starter/api --verbose
 
 # use only the built app for production
 FROM base AS runner
-EXPOSE 4000
+EXPOSE 5001
 USER node
 WORKDIR /app
 ENV NODE_ENV=prod

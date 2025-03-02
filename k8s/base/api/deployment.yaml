@@ -23,5 +23,5 @@ spec:
           # this is what we use locally with skaffold - we don't use versions in the base because this image is never published anywhere.
           image: monorepo-starter/api
           ports:
-            - containerPort: 4000 # External port. Without this, no health check is created from the readiness probe in gke, and it doesn't change the behavior locally
+            - containerPort: 5001 # External port. Without this, no health check is created from the readiness probe in gke, and it doesn't change the behavior locally
             - containerPort: 8083 # Internal port. 

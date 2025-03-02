@@ -37,7 +37,7 @@ COPY --from=pruner /app/out/api/full/ .
 
 
 FROM base AS runner
-EXPOSE 4000
+EXPOSE 5001
 USER node
 WORKDIR /app
 COPY --chown=node:node --from=installer /app .

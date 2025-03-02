@@ -11,8 +11,8 @@ spec:
   ports:
     - name: monorepo-starter-api-port
       protocol: TCP
-      port: 4000 # the external facing port of the Service
-      targetPort: 4000 # where traffic will be directed inside the pod - where the application is listening
+      port: 5001 # the external facing port of the Service
+      targetPort: 5001 # where traffic will be directed inside the pod - where the application is listening
 ---
 apiVersion: v1
 kind: Service

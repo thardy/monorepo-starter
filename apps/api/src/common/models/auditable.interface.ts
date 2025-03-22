@@ -1,6 +1,6 @@
 export interface IAuditable {
-  created?: Date;
-  createdBy?: string;
-  updated?: Date;
-  updatedBy?: string;
+  _created?: Date;
+  _createdBy?: string;
+  _updated?: Date;
+  _updatedBy?: string;
 }

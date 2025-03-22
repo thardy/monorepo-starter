@@ -1,6 +1,7 @@
+import { ObjectId } from "mongoose";
+
 export interface IEntity {
-  id: string,
-  orgId?: string;
+  _id: ObjectId,
 }
 
 // export const EntityValidationSchema = Joi.object().keys({

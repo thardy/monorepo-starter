@@ -6,5 +6,6 @@
   "events": {
     "restart": "echo \"[nodemon] App restarted due to changes\""
   },
-  "delay": "500"
+  "delay": "800",
+  "signal": "SIGTERM"
 } 

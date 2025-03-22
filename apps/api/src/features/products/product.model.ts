@@ -1,22 +1,30 @@
 import mongoose, { Schema, Document, Types, ObjectId } from 'mongoose';
-import { IEntity } from "#root/src/common/models/entity.interface";
-import { IAuditable } from "#root/src/common/models/auditable.interface";
+import { IAuditable } from '#root/src/common/models/auditable.interface';
+import { IEntity } from '#root/src/common/models/entity.interface';
 
-export interface IProduct extends IEntity, IAuditable {
+export interface IProduct extends IEntity, IAuditable {// extends Document, IAuditable {
   name: string;
   description?: string;
   price: number;
   quantity: number;
 }
 
-const productSchema = new Schema<IProduct>({
+export interface IProductDoc extends IProduct, Document<ObjectId> { }
+
+const productSchema = new Schema<IProductDoc>({
   name: { type: String, required: true },
   description: { type: String, required: false },
   price: { type: Number, required: true },
   quantity: { type: Number, required: true },
+  // Add auditable fields from IAuditable interface - Mongoose will only persist fields that are explicitly defined in the schema,
+  //  extending an interface is not enough.
+  _created: { type: Date },
+  _createdBy: { type: String },
+  _updated: { type: Date },
+  _updatedBy: { type: String }
 });
 
-export const Product = mongoose.model<IProduct>('Product', productSchema);
+export const Product = mongoose.model<IProductDoc>('product', productSchema, 'products');
 
 
 

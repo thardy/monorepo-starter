@@ -1,11 +1,13 @@
 import { first } from '#server/first';
-
+import { Server } from 'http';
 import mongoose from 'mongoose';
 import { externalApp, setupExternalExpress } from '#root/external-app';
 //import { internalApp, setupInternalExpress } from '#root/internal-app';
 import config from '#server/config/config';
 
 let db: mongoose.Connection | null = null;
+let externalServer: Server | null = null;
+let internalServer: Server | null = null;
 
 const startServer = async () => {
   first.initialize();  // Call initialize to load environment variables
@@ -33,7 +35,7 @@ const startServer = async () => {
   }
 
   if (db) {
-    externalApp.listen(config.port, () => {
+    externalServer = externalApp.listen(config.port, () => {
       console.log(`monorepo-starter-api listening on port ${config.port} (${config.env})!!!`);
     });
   }
@@ -48,32 +50,25 @@ const checkForRequiredConfigValues = () => {
   //if (!config.apiCommonConfig.clientSecret) { throw new Error('config.commonConfig.clientSecret is not defined'); }
 }
 
-// ******** Shutdown Cleanup Begin ********
-const cleanup = async (event: any) => {
+const cleanup = (event: any) => {
   console.log(`monorepo-starter-api server stopping due to ${event} event. running cleanup...`);
-  // clean stuff up here
-  if (db) {
-    console.log('closing mongodb connection');
-    await mongoose.connection.close(); // Close MongodDB Connection when Process ends
-  }
-  process.exit(); // Exit with default success-code '0'.
+  performGracefulShutdown(event);
 };
 
 // SIGINT is sent for example when you Ctrl+C a running process from the command line.
-process.on('SIGINT', async () => await cleanup('SIGINT'));
-process.on('SIGTERM', async () => await cleanup('SIGTERM'));
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
 
 // Add handlers for uncaught errors
-process.on('uncaughtException', async (error) => {
+process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  await cleanup('UNCAUGHT_EXCEPTION');
+  cleanup('UNCAUGHT_EXCEPTION');
 });
 
-process.on('unhandledRejection', async (reason, promise) => {
+process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  await cleanup('UNHANDLED_REJECTION');
+  cleanup('UNHANDLED_REJECTION');
 });
-// ******** Shutdown Cleanup End ********
 
 // const setupManualTestData = async (db: any) => {
 //   testUtils.initialize(db);
@@ -82,4 +77,91 @@ process.on('unhandledRejection', async (reason, promise) => {
 // };
 
 startServer();
+
+
+
+
+// ******** Detailed Shutdown Implementation ********
+/**
+ * Performs a graceful shutdown of all server resources
+ * - Closes HTTP servers with a timeout
+ * - Ensures MongoDB connection is always closed
+ * - Exits the process when cleanup is complete
+ */
+function performGracefulShutdown(event: any): void {
+  // Function to close MongoDB connection
+  const closeMongoConnection = async (): Promise<void> => {
+    if (db) {
+      console.log('closing mongodb connection');
+      try {
+        await mongoose.connection.close(); // Close MongodDB Connection when Process ends
+        console.log('MongoDB connection closed successfully');
+      } catch (err) {
+        console.error('Error closing MongoDB connection:', err);
+      }
+    }
+  };
+
+  // Create a promise to track server shutdown completion
+  const shutdownServers = new Promise<void>((resolve) => {
+    let serversClosedCount = 0;
+    const totalServers = (externalServer ? 1 : 0) + (internalServer ? 1 : 0);
+    
+    const onServerClosed = () => {
+      serversClosedCount++;
+      if (serversClosedCount >= totalServers) {
+        resolve();
+      }
+    };
+
+    // If no servers were started, resolve immediately
+    if (totalServers === 0) {
+      resolve();
+      return;
+    }
+
+    // Close the HTTP servers
+    if (externalServer) {
+      console.log('Closing external HTTP server...');
+      externalServer.close((err) => {
+        if (err) console.error('Error closing external server:', err);
+        console.log('External HTTP server closed');
+        onServerClosed();
+      });
+    }
+
+    if (internalServer) {
+      console.log('Closing internal HTTP server...');
+      internalServer.close((err) => {
+        if (err) console.error('Error closing internal server:', err);
+        console.log('Internal HTTP server closed');
+        onServerClosed();
+      });
+    }
+
+    // Force resolve after timeout if servers don't close gracefully
+    setTimeout(() => {
+      console.log('Server shutdown timeout reached, proceeding with MongoDB cleanup');
+      resolve();
+    }, 5000); // 5 second timeout
+  });
+
+  // Handle the complete shutdown sequence
+  Promise.race([
+    // Normal path: servers close, then MongoDB
+    shutdownServers.then(() => closeMongoConnection()),
+    
+    // Timeout path: ensure MongoDB closes even if servers timeout
+    new Promise<void>(resolve => {
+      setTimeout(async () => {
+        console.log('Ensuring MongoDB connection is closed before exit');
+        await closeMongoConnection();
+        resolve();
+      }, 6000); // Give a bit more time than the server timeout
+    })
+  ]).then(() => {
+    console.log('Cleanup complete, exiting process');
+    process.exit(0);
+  });
+}
 

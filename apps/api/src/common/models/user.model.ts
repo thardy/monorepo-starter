@@ -1,9 +1,8 @@
 import {IAuditable} from './auditable.interface.js';
 import {IEntity} from './entity.interface.js';
-import { ObjectId } from 'mongoose';
 
-export const ROLES = ["user", "editor", "admin", "developer"] as const;
-export type Role = (typeof ROLES)[number];
+// export const ROLES = ["user", "editor", "admin", "developer"] as const;
+// export type Role = (typeof ROLES)[number];
 
 export interface IUser extends IAuditable, IEntity {
 	email?: string;
@@ -17,10 +16,9 @@ export interface IUser extends IAuditable, IEntity {
 	createdBy?: string;
 	updated?: Date;
 	updatedBy?: string;
-	role?: Role;
+	roles?: string[];
 }
 
-// todo: Mongoosify this
 
 // export class User implements IUser {
 // 	_id: ObjectId;

@@ -1,11 +1,15 @@
-import { ObjectId } from "mongoose";
+import { ObjectId } from "mongodb";
 
 export interface IEntity {
   _id: ObjectId,
 }
 
-// export const EntityValidationSchema = Joi.object().keys({
-// 	id: Joi.string(),
-// 	orgId: Joi.string(),
+// export const EntitySchema = Type.Object({
+//   _id: Type.String({
+//     format: 'objectId',
+//     errorMessage: 'Invalid ID format'
+//   })
 // });
+
+
 

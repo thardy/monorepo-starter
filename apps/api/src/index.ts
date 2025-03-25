@@ -1,11 +1,13 @@
 import { first } from '#server/first';
+import {Db, MongoClient} from 'mongodb';
 import { Server } from 'http';
-import mongoose from 'mongoose';
+
 import { externalApp, setupExternalExpress } from '#root/external-app';
 //import { internalApp, setupInternalExpress } from '#root/internal-app';
 import config from '#server/config/config';
 
-let db: mongoose.Connection | null = null;
+let mongoClient: MongoClient;
+let db: Db;
 let externalServer: Server | null = null;
 let internalServer: Server | null = null;
 
@@ -19,14 +21,14 @@ const startServer = async () => {
   checkForRequiredConfigValues();
 	
   try {
+    mongoClient = new MongoClient(`${config.mongoUri}/${config.databaseName}`);
     console.log('connecting to mongoDb...');
-
-    await mongoose.connect(`${config.mongoUri}/${config.databaseName}`);
-    db = mongoose.connection;
-    console.log("...connected to mongoDb")
+    await mongoClient.connect();
+    db = mongoClient.db(config.databaseName);
+    console.log('...connected to mongoDb');
 
     // we need db to be ready before setting up express - all the controllers need it when they get instantiated
-    setupExternalExpress();
+    setupExternalExpress(db);
   }
   catch(err) {
     console.error(err);
@@ -91,10 +93,10 @@ startServer();
 function performGracefulShutdown(event: any): void {
   // Function to close MongoDB connection
   const closeMongoConnection = async (): Promise<void> => {
-    if (db) {
+    if (mongoClient) {
       console.log('closing mongodb connection');
       try {
-        await mongoose.connection.close(); // Close MongodDB Connection when Process ends
+        await mongoClient.close();
         console.log('MongoDB connection closed successfully');
       } catch (err) {
         console.error('Error closing MongoDB connection:', err);

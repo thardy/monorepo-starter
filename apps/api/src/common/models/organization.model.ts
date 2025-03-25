@@ -1,4 +1,3 @@
-import Joi from 'joi';
 import {IAuditable} from './auditable.interface.js';
 
 export interface IOrganization extends IAuditable {
@@ -30,16 +29,16 @@ export class Organization implements IOrganization {
     this.authToken = options.authToken ?? undefined;
   }
 
-  static validationSchema = Joi.object().keys({
-    id: Joi.string(),
-    name: Joi.string()
-      .required(),
-    code: Joi.string()
-      .required(),
-    description: Joi.string().allow(''),
-    status: Joi.number(), // todo: add a reference to all possible statuses
-    isMetaOrg: Joi.boolean(),
-    authToken: Joi.string(),
-  });
+  // static validationSchema = Joi.object().keys({
+  //   id: Joi.string(),
+  //   name: Joi.string()
+  //     .required(),
+  //   code: Joi.string()
+  //     .required(),
+  //   description: Joi.string().allow(''),
+  //   status: Joi.number(), // todo: add a reference to all possible statuses
+  //   isMetaOrg: Joi.boolean(),
+  //   authToken: Joi.string(),
+  // });
 
 }

@@ -1,30 +1,79 @@
-import mongoose, { Schema, Document, Types, ObjectId } from 'mongoose';
+// import mongoose, { Schema, Document, Types, ObjectId } from 'mongoose';
+import { Type, Static } from '@sinclair/typebox';
 import { IAuditable } from '#root/src/common/models/auditable.interface';
 import { IEntity } from '#root/src/common/models/entity.interface';
+import { entityUtils } from '#root/src/common/utils/entity.utils';
 
-export interface IProduct extends IEntity, IAuditable {// extends Document, IAuditable {
+// TypeScript interface
+export interface IProduct extends IEntity, IAuditable {
   name: string;
   description?: string;
   price: number;
   quantity: number;
 }
 
-export interface IProductDoc extends IProduct, Document<ObjectId> { }
-
-const productSchema = new Schema<IProductDoc>({
-  name: { type: String, required: true },
-  description: { type: String, required: false },
-  price: { type: Number, required: true },
-  quantity: { type: Number, required: true },
-  // Add auditable fields from IAuditable interface - Mongoose will only persist fields that are explicitly defined in the schema,
-  //  extending an interface is not enough.
-  _created: { type: Date },
-  _createdBy: { type: String },
-  _updated: { type: Date },
-  _updatedBy: { type: String }
+// todo: test this and figure out how TypeBox default errors look, then customize accordingly (we might just want to use title
+//  like we used label in Joi and get rid of errorMessage)
+// Product-specific properties schema
+const ProductSchema = Type.Object({
+  name: Type.String({
+    errorMessage: 'Product name is required',
+    title: 'Name'
+  }),
+  description: Type.Optional(Type.String({
+    title: 'Description'
+  })),
+  price: Type.Number({
+    minimum: 0,
+    multipleOf: 0.01,
+    //errorMessage: 'Price must be a positive number',
+    title: 'Price'
+  }),
+  quantity: Type.Number({
+    minimum: 10,
+    multipleOf: 5,
+    //errorMessage: 'Quantity must be a positive integer',
+    title: 'Quantity'
+  })
 });
 
-export const Product = mongoose.model<IProductDoc>('product', productSchema, 'products');
+console.log(`ProductSchema in json-schema format:: ${JSON.stringify(ProductSchema, null, 2)}`); // todo: delete me
+
+
+// Full product schema with entity and auditable fields
+// export const ProductSchema = Type.Intersect([
+//   EntitySchema,
+//   AuditableSchema,
+//   ProductPropertiesSchema
+// ]);
+
+// todo: refactor as much of this out as possible - if possible.
+// Partial schema for PATCH operations
+export const ProductPartialSchema = Type.Partial(ProductSchema);
+
+// Compile validators with meaningful cache keys
+export const ProductValidator = entityUtils.getValidator(ProductSchema, 'ProductSchema');
+export const ProductPartialValidator = entityUtils.getValidator(ProductPartialSchema, 'ProductPartialSchema');
+
+// TypeScript type
+export type ProductType = Static<typeof ProductSchema>;
+
+// export interface IProductDoc extends IProduct, Document<ObjectId> { }
+
+// const productSchema = new Schema<IProductDoc>({
+//   name: { type: String, required: true },
+//   description: { type: String, required: false },
+//   price: { type: Number, required: true },
+//   quantity: { type: Number, required: true },
+//   // Add auditable fields from IAuditable interface - Mongoose will only persist fields that are explicitly defined in the schema,
+//   //  extending an interface is not enough.
+//   _created: { type: Date },
+//   _createdBy: { type: String },
+//   _updated: { type: Date },
+//   _updatedBy: { type: String }
+// });
+
+// export const Product = mongoose.model<IProductDoc>('product', productSchema, 'products');
 
 
 

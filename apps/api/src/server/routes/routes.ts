@@ -1,3 +1,4 @@
+import { Db } from 'mongodb';
 import {Application} from 'express';
 import fs from 'fs';
 import path from 'path';
@@ -6,7 +7,6 @@ import config from '#server/config/config';
 //import {isAuthenticated} from '#common/middleware/is-authenticated';
 //import {AuthController} from '#features/auth/auth.controller';
 import {ProductsController} from '#features/products/products.controller';
-
 // *** end of imports [buildit marker] ***
 
 const getPackageJsonPath = () => {
@@ -18,7 +18,7 @@ const getPackageJsonPath = () => {
 	return pathToPackageJson;
 };
 
-export default function(app: Application) {
+export default function(app: Application, db: Db) {
 	// add endpoint for k8s health check
 	app.get(`/api/health`, async (req: any, res: any) => { res.status(200).send('OK'); })
 
@@ -47,7 +47,7 @@ export default function(app: Application) {
 
 	// each controller has a 'mapRoutes' function that adds its routes to the express app
 	// const authController = new AuthController(app, db);
-	const productsController = new ProductsController(app);
+	const productsController = new ProductsController(app, db);
 	// *** end of routes [buildit marker] ***
 };
 

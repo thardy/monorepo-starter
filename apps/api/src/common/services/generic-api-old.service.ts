@@ -14,7 +14,7 @@ import {IPagedResult} from '../models/paged-result.interface.js';
 import {entityUtils, apiUtils, dbUtils} from '../utils/index.js';
 
 // todo: Enforce multi-tenancy on everything here
-export class GenericApiService<T extends IEntity> implements IGenericApiService<T> {
+export class GenericApiServiceOld<T extends IEntity> implements IGenericApiService<T> {
   protected db: Db;
 	/**
 	 * This is camel-cased, plural (e.g. 'weatherAlerts')
@@ -329,9 +329,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   }
 
   transformSingle(single: any) {
-	  entityUtils.useFriendlyId(single);
-		entityUtils.removeMongoId(single);
-    return single;
+	  return single;
   }
 
 	private stripSenderProvidedSystemProperties(doc: any) {

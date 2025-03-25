@@ -9,12 +9,14 @@ export interface IGenericApiService<T extends IEntity> {
 	get(userContext: IUserContext, queryOptions: QueryOptions): Promise<IPagedResult<T>>;
   getById(userContext: IUserContext, id: string): Promise<T>;
 	getCount(userContext: IUserContext): Promise<number>;
-	create(userContext: IUserContext, item: T): Promise<T>;
-  fullUpdateById(userContext: IUserContext, id: string, item: T): Promise<any>;
-	partialUpdateById(userContext: IUserContext, id: string, item: T): Promise<any>;
-  partialUpdateByIdWithoutBeforeAndAfter(userContext: IUserContext, id: string, item: T): Promise<any>;
-  update(userContext: IUserContext, queryObject: any, item: T): Promise<any>;
+	create(userContext: IUserContext, item: T): Promise<T | null>;
+  createMany(userContext: IUserContext, items: T[]): Promise<T[]>;
+  fullUpdateById(userContext: IUserContext, id: string, item: T): Promise<T>;
+	partialUpdateById(userContext: IUserContext, id: string, item: Partial<T>): Promise<T>;
+  partialUpdateByIdWithoutBeforeAndAfter(userContext: IUserContext, id: string, item: Partial<T>): Promise<T>;
+  update(userContext: IUserContext, queryObject: any, item: Partial<T>): Promise<T[]>;
   deleteById(userContext: IUserContext, id: string): Promise<DeleteResult>;
+  deleteMany(userContext: IUserContext, queryObject: any): Promise<DeleteResult>;
   find(userContext: IUserContext, mongoQueryObject: any, options?: FindOptions<Document> | undefined): Promise<T[]>;
   findOne(userContext: IUserContext, mongoQueryObject: any, options?: FindOptions<Document> | undefined): Promise<T>;
 }

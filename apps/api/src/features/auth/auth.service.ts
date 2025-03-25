@@ -54,9 +54,9 @@ export class AuthService extends GenericApiService<User> {
 			return Promise.reject(new TypeError('id is not a valid ObjectId'));
 		}
 
+		// todo: remove all these direct collection calls and use the GenericApiService methods instead!!!!!
 		return this.collection.findOne({_id: new ObjectId(id)})
 			.then((doc) => {
-				entityUtils.useFriendlyId(doc);
 				return doc;
 			});
 	}
@@ -64,7 +64,6 @@ export class AuthService extends GenericApiService<User> {
 	getUserByEmail(email: string): Promise<IUser> {
 		return this.collection.findOne({email: email})
 			.then((user: any) => {
-				entityUtils.useFriendlyId(user);
 				return user;
 			});
 	}
@@ -98,7 +97,6 @@ export class AuthService extends GenericApiService<User> {
 			const insertResult = await this.collection.insertOne(user);
 
 			if (insertResult.insertedId) {
-				entityUtils.useFriendlyId(user);
 				this.transformSingle(user);
 			}
 		} catch (err: any) {

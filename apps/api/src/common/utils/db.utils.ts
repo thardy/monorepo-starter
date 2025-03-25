@@ -6,54 +6,54 @@ import {entityUtils} from './entity.utils.js';
 /**
  * Convert our custom filter format to a Mongoose query
  */
-function buildMongooseQueryFromFilters(filters: { [key: string]: Filter }): any {
-	const query: any = {};
+// function buildMongooseQueryFromFilters(filters: { [key: string]: Filter }): any {
+// 	const query: any = {};
 	
-	for (const key in filters) {
-		const filter = filters[key];
+// 	for (const key in filters) {
+// 		const filter = filters[key];
 		
-		if (filter.eq !== undefined) {
-			// Handle ObjectIds for fields ending with 'Id'
-			if (typeof filter.eq === 'string' && key.endsWith('Id') && entityUtils.isValidObjectId(filter.eq)) {
-				query[key] = new ObjectId(filter.eq);
-			} else {
-				query[key] = filter.eq;
-			}
-		}
-		if (filter.ne !== undefined) {
-			query[key] = { $ne: filter.ne };
-		}
-		if (filter.gt !== undefined) {
-			query[key] = { ...query[key], $gt: filter.gt };
-		}
-		if (filter.gte !== undefined) {
-			query[key] = { ...query[key], $gte: filter.gte };
-		}
-		if (filter.lt !== undefined) {
-			query[key] = { ...query[key], $lt: filter.lt };
-		}
-		if (filter.lte !== undefined) {
-			query[key] = { ...query[key], $lte: filter.lte };
-		}
-		if (filter.contains !== undefined) {
-			query[key] = { $regex: filter.contains, $options: 'i' };
-		}
-		if (filter.startsWith !== undefined) {
-			query[key] = { $regex: `^${filter.startsWith}`, $options: 'i' };
-		}
-		if (filter.endsWith !== undefined) {
-			query[key] = { $regex: `${filter.endsWith}$`, $options: 'i' };
-		}
-		if (filter.any !== undefined) {
-			query[key] = { $in: filter.any };
-		}
-		if (filter.all !== undefined) {
-			query[key] = { $all: filter.all };
-		}
-	}
+// 		if (filter.eq !== undefined) {
+// 			// Handle ObjectIds for fields ending with 'Id'
+// 			if (typeof filter.eq === 'string' && key.endsWith('Id') && entityUtils.isValidObjectId(filter.eq)) {
+// 				query[key] = new ObjectId(filter.eq);
+// 			} else {
+// 				query[key] = filter.eq;
+// 			}
+// 		}
+// 		if (filter.ne !== undefined) {
+// 			query[key] = { $ne: filter.ne };
+// 		}
+// 		if (filter.gt !== undefined) {
+// 			query[key] = { ...query[key], $gt: filter.gt };
+// 		}
+// 		if (filter.gte !== undefined) {
+// 			query[key] = { ...query[key], $gte: filter.gte };
+// 		}
+// 		if (filter.lt !== undefined) {
+// 			query[key] = { ...query[key], $lt: filter.lt };
+// 		}
+// 		if (filter.lte !== undefined) {
+// 			query[key] = { ...query[key], $lte: filter.lte };
+// 		}
+// 		if (filter.contains !== undefined) {
+// 			query[key] = { $regex: filter.contains, $options: 'i' };
+// 		}
+// 		if (filter.startsWith !== undefined) {
+// 			query[key] = { $regex: `^${filter.startsWith}`, $options: 'i' };
+// 		}
+// 		if (filter.endsWith !== undefined) {
+// 			query[key] = { $regex: `${filter.endsWith}$`, $options: 'i' };
+// 		}
+// 		if (filter.any !== undefined) {
+// 			query[key] = { $in: filter.any };
+// 		}
+// 		if (filter.all !== undefined) {
+// 			query[key] = { $all: filter.all };
+// 		}
+// 	}
 	
-	return query;
-}
+// 	return query;
+// }
 
 function buildMongoMatchFromQueryOptions(queryOptions: IQueryOptions) {
 	// {
@@ -198,6 +198,6 @@ export const dbUtils = {
 	addKeyValueToWhereClause,
 	appendToWhereClause,
 	formatValue,
-	buildMongooseQueryFromFilters,
+	// buildMongooseQueryFromFilters,
 	// sanitizeMongoInput,
 }

@@ -1,11 +1,16 @@
-import { Application, Request, Response } from 'express';
-import { Product, IProduct } from './product.model.js';
+import { Db } from 'mongodb';
+import { Application, Request, Response, NextFunction } from 'express';
+
 import { ProductService } from './product.service.js';
-import mongoose from 'mongoose';
-import { IUserContext } from '../../common/models/user-context.interface.js';
-import { isAuthenticated } from '#root/src/common/middleware/is-authenticated';
+// import mongoose from 'mongoose';
+import { IUserContext } from '#common/models/user-context.interface';
+import { isAuthenticated } from '#common/middleware/is-authenticated';
+import { entityUtils } from '#common/utils/entity.utils';
+import { BadRequestError, NotFoundError } from '#common/errors/index';
+import { apiUtils } from '#common/utils/index';
 
 // Extend Express Request type to include user property
+// todo: move this to a global location (wherever I extend third party types)
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
@@ -17,8 +22,8 @@ export class ProductsController {
   protected slug: string = 'products';
   private productService: ProductService;
 
-  constructor(app: Application) {
-    this.productService = new ProductService();
+  constructor(app: Application, db: Db) {
+    this.productService = new ProductService(db);
     this.mapRoutes(app);
   }
 
@@ -34,151 +39,75 @@ export class ProductsController {
     app.get(`/api/${this.slug}/low-inventory/:threshold`, this.getLowInventory.bind(this));
   }
 
-  async getAll(req: AuthenticatedRequest, res: Response) {
-    try {
-      // Create a simple user context
-      const userContext: IUserContext = {
-        user: { id: req.user?.id || 'anonymous' }
-      };
-      
-      const products = await this.productService.getAll(userContext);
-      res.json(products);
-    }
-    catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Server Error' });
-    }
+  async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    // Create a simple user context
+    const userContext: IUserContext = {
+      user: { id: req.user?.id || 'anonymous' }
+    };
+    
+    const products = await this.productService.getAll(userContext);
+    return apiUtils.apiResponse(res, 200, { data: products });
   }
 
   // GET a single product by ID
-  async getById(req: AuthenticatedRequest, res: Response) {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        return res.status(400).json({ message: 'Invalid product ID' });
-      }
-
-      const userContext: IUserContext = {
-        user: { id: req.user?.id || 'anonymous' }
-      };
-      
-      try {
-        const product = await this.productService.getById(userContext, req.params.id);
-        res.json(product);
-      } catch (error) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Server Error' });
-    }
+  async getById(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    const userContext: IUserContext = {
+      user: { id: req.user?.id || 'anonymous' }
+    };
+    
+    const product = await this.productService.getById(userContext, req.params.id);
+    return apiUtils.apiResponse(res, 200, { data: product });
   }
 
   // CREATE a new product
-  async create(req: AuthenticatedRequest, res: Response) {
-    try {
-      const userContext: IUserContext = {
-        user: { id: req.user?.id || 'anonymous' }
-      };
-      
-      const product = await this.productService.create(userContext, req.body);
-      res.status(201).json(product);
-    } catch (err: any) {
-      console.error(err);
-      
-      if (err.name === 'ValidationError') {
-        return res.status(400).json({ 
-          message: 'Validation Error', 
-          errors: err.errors 
-        });
-      }
-      
-      res.status(500).json({ message: 'Server Error' });
-    }
+  async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    const userContext: IUserContext = {
+      user: { id: req.user?.id || 'anonymous' }
+    };
+    
+    const product = await this.productService.create(userContext, req.body);
+    return apiUtils.apiResponse(res, 201, { data: product });
   }
 
   // PATCH (partial update) a product
-  async patch(req: AuthenticatedRequest, res: Response) {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        return res.status(400).json({ message: 'Invalid product ID' });
-      }
-
-      const userContext: IUserContext = {
-        user: { id: req.user?.id || 'anonymous' }
-      };
-      
-      try {
-        const product = await this.productService.partialUpdateById(userContext, req.params.id, req.body);
-        res.json(product);
-      } catch (error) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Server Error' });
-    }
+  async patch(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    const userContext: IUserContext = {
+      user: { id: req.user?.id || 'anonymous' }
+    };
+    
+    const product = await this.productService.partialUpdateById(userContext, req.params.id, req.body);
+    return apiUtils.apiResponse(res, 200, { data: product });
   }
 
   // UPDATE (full update) a product
-  async update(req: AuthenticatedRequest, res: Response) {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        return res.status(400).json({ message: 'Invalid product ID' });
-      }
-
-      const userContext: IUserContext = {
-        user: { id: req.user?.id || 'anonymous' }
-      };
-      
-      try {
-        const product = await this.productService.fullUpdateById(userContext, req.params.id, req.body);
-        res.json(product);
-      } catch (error) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Server Error' });
-    }
+  async update(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    const userContext: IUserContext = {
+      user: { id: req.user?.id || 'anonymous' }
+    };
+    
+    const product = await this.productService.fullUpdateById(userContext, req.params.id, req.body);
+    return apiUtils.apiResponse(res, 200, { data: product });
   }
 
   // DELETE a product
-  async delete(req: AuthenticatedRequest, res: Response) {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        return res.status(400).json({ message: 'Invalid product ID' });
-      }
-
-      const userContext: IUserContext = {
-        user: { id: req.user?.id || 'anonymous' }
-      };
-      
-      try {
-        await this.productService.deleteById(userContext, req.params.id);
-        res.status(204).end();
-      } catch (error) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Server Error' });
-    }
+  async delete(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    const userContext: IUserContext = {
+      user: { id: req.user?.id || 'anonymous' }
+    };
+    
+    await this.productService.deleteById(userContext, req.params.id);
+    return apiUtils.apiResponse(res, 204, {});
   }
 
   // Custom endpoint to get products with low inventory
-  async getLowInventory(req: AuthenticatedRequest, res: Response) {
-    try {
-      const threshold = parseInt(req.params.threshold) || 10;
-      
-      const userContext: IUserContext = {
-        user: { id: req.user?.id || 'anonymous' }
-      };
-      
-      const products = await this.productService.getLowInventoryProducts(userContext, threshold);
-      res.json(products);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Server Error' });
-    }
+  async getLowInventory(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    const threshold = parseInt(req.params.threshold) || 10;
+    
+    const userContext: IUserContext = {
+      user: { id: req.user?.id || 'anonymous' }
+    };
+    
+    const products = await this.productService.getLowInventoryProducts(userContext, threshold);
+    return apiUtils.apiResponse(res, 200, { data: products });
   }
 }

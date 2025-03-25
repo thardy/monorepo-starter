@@ -1,21 +1,38 @@
 import {CustomError} from './custom.error.js';
-import Joi from 'joi';
+import { ValueError } from '@sinclair/typebox/errors';
 
 export class ValidationError extends CustomError {
   statusCode = 400;
+  protected validationError: any;
 
-  constructor(public validationError: Joi.ValidationError) {
-    // call super with message
-    super(validationError?.details[0]?.message);
-    // set prototype
+  constructor(validationError: any) {
+    // TypeBox errors are an array of ValueError objects
+    if (Array.isArray(validationError)) {
+      super(validationError[0]?.message || 'Validation Error');
+    }
+    else {
+      super('Validation Error');
+    }
+    this.validationError = validationError;
+    
+    
+    // Set prototype
     Object.setPrototypeOf(this, ValidationError.prototype);
   }
 
   serializeErrors(): { message: string; field?: string | undefined; }[] {
-    return this.validationError.details.map((errorDetail: any) => {
-      let error = { message: errorDetail.message, field: errorDetail.path.toString() };
-      return error;
-    });
+    // If it's a TypeBox error (array of ValueError objects)
+    if (Array.isArray(this.validationError)) {
+      return this.validationError.map((error: ValueError) => {
+        return {
+          message: error.message,
+          field: error.path.slice(1) // Remove the leading / from the path that TypeBox adds
+        };
+      });
+    }
+    
+    // Fallback for other validation errors
+    return [{ message: 'Validation Error' }];
   }
 }
 

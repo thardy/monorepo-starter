@@ -1,7 +1,7 @@
 import { Db, Collection, ObjectId, DeleteResult, Document, FindOptions } from 'mongodb';
 import moment from 'moment';
 import _ from 'lodash';
-import { BadRequestError, DuplicateKeyError, IdNotFoundError, NotFoundError, ServerError, ValidationError } from '../errors/index.js';
+import { BadRequestError, DuplicateKeyError, IdNotFoundError, NotFoundError, ServerError } from '../errors/index.js';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { ValueError } from '@sinclair/typebox/errors';
 
@@ -59,15 +59,8 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
       return null;
     }
     
-    const valid = validator.Check(doc);
-    
-    if (!valid) {
-      const errors = [...validator.Errors(doc)];
-      console.log(`errors from TypeBox: ${JSON.stringify(errors)}`); // todo: delete me
-      return errors;
-    }
-    
-    return null;
+    // Use centralized validation function
+    return entityUtils.validate(validator, doc);
   }
 
   /**
@@ -362,6 +355,9 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
     if (!entityUtils.isValidObjectId(id)) {
       throw new BadRequestError('id is not a valid ObjectId');
     }
+
+    const validationErrors = this.validate(entity, true);
+    entityUtils.handleValidationResult(validationErrors, 'GenericApiService.partialUpdateByIdWithoutBeforeAndAfter');
 
     // Prepare the entity without going through onBeforeUpdate
     const preparedEntity = this.preparePayload(userContext, entity, false);

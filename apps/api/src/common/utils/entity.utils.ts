@@ -10,54 +10,32 @@ import { ValueError } from '@sinclair/typebox/errors';
  */
 export const PROPERTIES_THAT_ARE_NOT_OBJECT_IDS = ['orgId'];
 
-// Cache for compiled validators (shared across all uses)
-const validatorCache = new Map<string, ReturnType<typeof TypeCompiler.Compile>>();
-
 /**
- * Gets or creates a cached TypeBox validator for a schema
+ * Compiles a TypeBox schema into a validator
  * @param schema The TypeBox schema to compile
- * @param cacheKey Optional key for caching. If not provided, stringifies the schema
  * @returns A compiled validator for the schema
  */
-function getValidator(
-  schema: TSchema, 
-  cacheKey?: string
-): ReturnType<typeof TypeCompiler.Compile> {
-  // Generate a cache key if none provided
-  const key = cacheKey || JSON.stringify(schema);
-  
-  // Return cached validator if available
-  if (validatorCache.has(key)) {
-    return validatorCache.get(key)!;
-  }
-  
-  // Compile and cache the validator
-  const validator = TypeCompiler.Compile(schema);
-  validatorCache.set(key, validator);
-  
-  return validator;
+function getValidator(schema: TSchema): ReturnType<typeof TypeCompiler.Compile> {
+  return TypeCompiler.Compile(schema);
 }
 
 /**
- * Validates data against a schema using a cached validator
- * @param schema The TypeBox schema to validate against
+ * Validates data against a validator
+ * @param validator The compiled TypeBox validator
  * @param data The data to validate
- * @param cacheKey Optional key for caching
  * @returns Validation result with errors if invalid
  */
-function validateWithSchema(
-  schema: TSchema,
-  data: unknown,
-  cacheKey?: string
-): { valid: boolean; errors?: ValueError[] } {
-  const validator = getValidator(schema, cacheKey);
+function validate(
+  validator: ReturnType<typeof TypeCompiler.Compile>,
+  data: unknown
+): ValueError[] | null {
   const valid = validator.Check(data);
   
   if (!valid) {
-    return { valid, errors: [...validator.Errors(data)] };
+    return [...validator.Errors(data)];
   }
   
-  return { valid };
+  return null;
 }
 
 /**
@@ -67,24 +45,6 @@ function validateWithSchema(
  * @throws ValidationError if validation errors exist
  */
 function handleValidationResult(validationErrors: ValueError[] | null, methodName: string): void {
-  // if (validationResult?.error) {
-  //   // If error is already a formatted ValidationError
-  //   if (validationResult.error instanceof ValidationError) {
-  //     throw validationResult.error;
-  //   }
-  //   // Handle TypeBox validation errors (array of ValueError)
-  //   else if (validationResult.error instanceof Array) {
-  //     throw new ValidationError(validationResult.error);
-  //   }
-  //   // Handle other validation errors
-  //   else {
-  //     throw new BadRequestError(
-  //       `Validation error in ${methodName}: ${validationResult.error.message || 'Unknown error'}`
-  //     );
-  //   }
-  
-  
-  
   if (validationErrors) {
     throw new ValidationError(validationErrors);
   }
@@ -153,5 +113,5 @@ export const entityUtils =  {
   isAuditable,
   PROPERTIES_THAT_ARE_NOT_OBJECT_IDS,
   getValidator,
-  validateWithSchema
+  validate
 };

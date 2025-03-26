@@ -1,8 +1,8 @@
 import {Db, ObjectId} from 'mongodb';
 import crypto from 'crypto';
 import moment from 'moment';
-import {GenericApiService} from '@meritas-digital/api-common/services';
-import {User} from '@meritas-digital/risk-answer-models';
+import {GenericApiService} from '#common/services/index';
+import {User} from '#common/models/index';
 import {IPasswordResetToken} from './password-reset-token.interface.js';
 
 export class PasswordResetTokenService extends GenericApiService<IPasswordResetToken> {

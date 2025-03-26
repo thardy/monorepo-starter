@@ -1,11 +1,10 @@
 import {Application, NextFunction, Request, Response} from 'express';
+import {DeleteResult, UpdateResult} from 'mongodb';
 import {IGenericApiService} from '../services/index.js';
-import {IEntity} from '#common/models/entity.interface';
-import {IPagedResult} from '#common/models/paged-result.interface';
+import {IEntity, IPagedResult} from '../models/index.js';
 
 import {isAuthenticated} from '../middleware/index.js';
 import {apiUtils} from '../utils/index.js';
-import {DeleteResult, UpdateResult} from 'mongodb';
 
 export abstract class ApiController<T extends IEntity> {
   protected app: Application;
@@ -43,6 +42,7 @@ export abstract class ApiController<T extends IEntity> {
     }
     catch (error) {
       next(error);
+      // todo: figure out exactly what I want to return on error (if anything, does this return even get called? - debug it), and return just once at the end - then replicate in all functions.
       return;
     }
   }
@@ -91,7 +91,7 @@ export abstract class ApiController<T extends IEntity> {
     try {
       res.set('Content-Type', 'application/json');
       const entity = await this.service.create(req.userContext!, req.body);
-      return apiUtils.apiResponse<T>(res, 201, {data: entity});
+      return apiUtils.apiResponse<T>(res, 201, {data: entity || undefined});
     } 
     catch (error) {
       next(error);
@@ -103,7 +103,7 @@ export abstract class ApiController<T extends IEntity> {
     try {
       res.set('Content-Type', 'application/json');
       const updateResult = await this.service.fullUpdateById(req.userContext!, req.params.id, req.body);
-      return apiUtils.apiResponse<UpdateResult>(res, 200, {data: updateResult});
+      return apiUtils.apiResponse<T>(res, 200, {data: updateResult});
     } 
     catch (error) {
       next(error);
@@ -115,7 +115,7 @@ export abstract class ApiController<T extends IEntity> {
 		try {
 			res.set('Content-Type', 'application/json');
 			const updateResult = await this.service.partialUpdateById(req.userContext!, req.params.id, req.body);
-			return apiUtils.apiResponse<UpdateResult>(res, 200, {data: updateResult});
+			return apiUtils.apiResponse<T>(res, 200, {data: updateResult});
 		} 
     catch (error) {
 			next(error);

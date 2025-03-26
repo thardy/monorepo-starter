@@ -1,6 +1,11 @@
-import {User} from './user.model.js';
+import {IUser} from './user.model.js';
 
 export interface IUserContext {
-  user: User;
+  user: IUser;
 	orgId?: string;
+}
+
+export const EmptyUserContext: IUserContext = {
+  user: {} as IUser,
+  orgId: undefined
 }

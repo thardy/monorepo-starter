@@ -1,5 +1,5 @@
 {
-  "name": "api",
+  "name": "@monorepo-starter/api",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
   "targets": {
     "build:prod": {

@@ -19,7 +19,11 @@
     "start": "nodemon --watch src -e ts,json --exec tsx src/index.ts",
     "build": "tsc --build tsconfig.json",
     "build:prod": "tsc --project tsconfig.prod.json --traceResolution --extendedDiagnostics",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "cross-env NODE_ENV=test vitest run",
+    "test:watch": "cross-env NODE_ENV=test vitest",
+    "test:ci": "cross-env NODE_ENV=test vitest run --reporter=json --outputFile=test-results.json",
+    "coverage": "cross-env NODE_ENV=test vitest run --coverage"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.31",
@@ -42,11 +46,13 @@
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",
     "@types/node": "^20.12.8",
+    "@vitest/coverage-v8": "^3.0.9",
     "cross-env": "^7.0.3",
     "mongodb-memory-server": "^9.3.0",
     "nodemon": "^3.0.0",
     "npm-run-all": "^4.1.5",
-    "ts-jest": "^29.1.4"
+    "supertest": "^7.1.0",
+    "vitest": "^3.0.9"
   },
   "config": {
     "mongodb-memory-server": {

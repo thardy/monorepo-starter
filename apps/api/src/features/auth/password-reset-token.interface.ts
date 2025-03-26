@@ -1,4 +1,4 @@
-import {IEntity} from '@meritas-digital/risk-answer-models';
+import {IEntity} from '#common/models/index';
 
 export interface IPasswordResetToken extends IEntity {
 	email: string;

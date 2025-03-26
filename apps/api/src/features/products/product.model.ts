@@ -2,7 +2,7 @@
 import { Type, Static } from '@sinclair/typebox';
 import { IAuditable } from '#root/src/common/models/auditable.interface';
 import { IEntity } from '#root/src/common/models/entity.interface';
-import { entityUtils } from '#root/src/common/utils/entity.utils';
+import { entityUtils } from '#common/utils/index';
 
 // TypeScript interface - this contains the product properties (name, description, price, quantity) and the entity and auditable properties
 export interface IProduct extends IEntity, IAuditable {

@@ -2,7 +2,6 @@ import { Db, Collection, ObjectId, DeleteResult, Document, FindOptions } from 'm
 import moment from 'moment';
 import _ from 'lodash';
 import { BadRequestError, DuplicateKeyError, IdNotFoundError, NotFoundError, ServerError } from '../errors/index.js';
-import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { ValueError } from '@sinclair/typebox/errors';
 
 import { IGenericApiService } from './generic-api-service.interface.js';
@@ -462,7 +461,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   auditForCreate(userContext: IUserContext | undefined, doc: IAuditable) {
     const now = moment().utc().toDate();
     // const userId = current.context && current.context.current && current.context.current.user ? current.context.user.email : 'system';
-    const userId = userContext?.user?.id ?? 'system';
+    const userId = userContext?.user?._id?.toString() ?? 'system';
     doc._created = now;
     doc._createdBy = userId;
     doc._updated = now;
@@ -470,7 +469,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   }
 
   auditForUpdate(userContext: IUserContext | undefined, doc: IAuditable) {
-    const userId = userContext?.user?.id ?? 'system';
+    const userId = userContext?.user?._id?.toString() ?? 'system';
     doc._updated = moment().utc().toDate();
     doc._updatedBy = userId;
   }

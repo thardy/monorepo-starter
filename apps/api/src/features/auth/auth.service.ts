@@ -3,10 +3,10 @@ import {Request, Response} from 'express';
 import moment from 'moment';
 import crypto from 'crypto';
 
-import {BadRequestError, DuplicateKeyError} from '@meritas-digital/api-common/errors';
-import {JwtService, EmailService, GenericApiService} from '@meritas-digital/api-common/services';
-import {IUserContext, IUser, ROLES, User, LoginResponse, TokenResponse} from '@meritas-digital/risk-answer-models';
-import {conversionUtils, entityUtils, passwordUtils} from '@meritas-digital/api-common/utils';
+import {BadRequestError, DuplicateKeyError} from '#common/errors/index';
+import {JwtService, EmailService, GenericApiService} from '#common/services/index';
+import {IUserContext, IUser, ROLES, User, LoginResponse, TokenResponse} from '#common/models/index';
+import {conversionUtils, entityUtils, passwordUtils} from '#common/utils/index';
 
 import config from '#server/config/config';
 import {PasswordResetTokenService} from '#features/auth/password-reset-token.service';

@@ -12,4 +12,5 @@ export * from './auditable.interface.js';
 export * from './address.interface.js';
 export * from './api-error.interface.js';
 export * from './api-response.interface.js';
+export * from './model-spec.interface.js';
 export * from './types/index.js';

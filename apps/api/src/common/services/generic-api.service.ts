@@ -6,7 +6,7 @@ import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { ValueError } from '@sinclair/typebox/errors';
 
 import { IGenericApiService } from './generic-api-service.interface.js';
-import { IAuditable, IUserContext, IEntity, QueryOptions, IPagedResult } from '../models/index.js';
+import { IAuditable, IUserContext, IEntity, QueryOptions, IPagedResult, IModelSpec } from '../models/index.js';
 import { entityUtils, apiUtils, dbUtils } from '../utils/index.js';
 
 export class GenericApiService<T extends IEntity> implements IGenericApiService<T> {
@@ -21,25 +21,20 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   protected singularResourceName: string;
   protected collection: Collection;
   
-  // Add validators as class properties
-  private validator?: ReturnType<typeof TypeCompiler.Compile>;
-  private partialValidator?: ReturnType<typeof TypeCompiler.Compile>;
+  // Store the model spec
+  protected modelSpec?: IModelSpec;
 
   constructor(
     db: Db, 
     pluralResourceName: string, 
     singularResourceName: string,
-    validator?: ReturnType<typeof TypeCompiler.Compile>, 
-    partialValidator?: ReturnType<typeof TypeCompiler.Compile>
+    modelSpec?: IModelSpec
   ) {
     this.db = db;
     this.pluralResourceName = pluralResourceName;
     this.singularResourceName = singularResourceName;
     this.collection = db.collection(pluralResourceName);
-    
-    // Store validators if provided
-    this.validator = validator;
-    this.partialValidator = partialValidator;
+    this.modelSpec = modelSpec;
   }
 
   /**
@@ -49,15 +44,12 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
    * @returns null if valid, or an array of ValueError objects if invalid
    */
   validate(doc: any, isPartial: boolean = false): ValueError[] | null {
-    // If no validators were provided, consider it valid
-    if ((!this.validator && !isPartial) || (!this.partialValidator && isPartial)) {
+    // If no model spec was provided, consider it valid
+    if (!this.modelSpec) {
       return null;
     }
     
-    const validator = isPartial ? this.partialValidator : this.validator;
-    if (!validator) {
-      return null;
-    }
+    const validator = isPartial ? this.modelSpec.partialValidator : this.modelSpec.validator;
     
     // Use centralized validation function
     return entityUtils.validate(validator, doc);

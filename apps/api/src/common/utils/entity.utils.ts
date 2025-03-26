@@ -1,6 +1,6 @@
 import { BadRequestError, ServerError, ValidationError } from '../errors/index.js';
 import { ObjectId } from 'mongodb';
-import { TSchema } from '@sinclair/typebox';
+import { TSchema, Type } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { ValueError } from '@sinclair/typebox/errors';
 
@@ -17,6 +17,24 @@ export const PROPERTIES_THAT_ARE_NOT_OBJECT_IDS = ['orgId'];
  */
 function getValidator(schema: TSchema): ReturnType<typeof TypeCompiler.Compile> {
   return TypeCompiler.Compile(schema);
+}
+
+/**
+ * Creates an object with schema and validators - everything needed for validation
+ * @param schema The original TypeBox schema
+ * @returns Object containing schema, partialSchema, validator, and partialVAlidator
+ */
+function getModelSpec<T extends TSchema>(schema: T) {
+  const partialSchema = Type.Partial(schema);
+  const validator = getValidator(schema);
+  const partialValidator = getValidator(partialSchema);
+  
+  return {
+    schema,
+    partialSchema,
+    validator,
+    partialValidator
+  };
 }
 
 /**
@@ -113,5 +131,6 @@ export const entityUtils =  {
   isAuditable,
   PROPERTIES_THAT_ARE_NOT_OBJECT_IDS,
   getValidator,
+  getModelSpec,
   validate
 };

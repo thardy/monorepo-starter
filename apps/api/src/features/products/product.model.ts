@@ -35,16 +35,11 @@ export const ProductSchema = Type.Object({
   })
 });
 
-// Partial schema for PATCH operations
-export const ProductPartialSchema = Type.Partial(ProductSchema);
+export const ProductSpec = entityUtils.getModelSpec(ProductSchema);
 
-// Compile validators only once
-export const ProductValidator = entityUtils.getValidator(ProductSchema);
-export const ProductPartialValidator = entityUtils.getValidator(ProductPartialSchema);
+// // TypeScript type - this only contains the product properties (name, description, price, quantity). Is this needed?
+// export type ProductType = Static<typeof ProductSchema>;
 
-// TypeScript type - this only contains the product properties (name, description, price, quantity). Is this needed?
-export type ProductType = Static<typeof ProductSchema>;
 
-// todo: consider moving all validator and schema stuff into a standard interface and have an entity.utils function return it
-//  then we could collapse a lot of the above lines into a single line like...
-//  expose const validationStuff = entityUtils.getValidationStuff(ProductSchema)
+
+

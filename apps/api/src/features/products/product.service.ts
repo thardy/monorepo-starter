@@ -1,18 +1,12 @@
 import { Db } from 'mongodb';
 import { GenericApiService } from '../../common/services/generic-api.service.js';
-import { IProduct, ProductValidator, ProductPartialValidator } from './product.model.js';
+import { IProduct, ProductSpec } from './product.model.js';
 import { IUserContext } from '../../common/models/user-context.interface.js';
 import { BadRequestError } from '../../common/errors/index.js';
 
 export class ProductService extends GenericApiService<IProduct> {
 	constructor(db: Db) {
-		super(
-			db, 
-			'products', 
-			'product',
-			ProductValidator,
-			ProductPartialValidator
-		);
+		super(db, 'products', 'product', ProductSpec);
 	}
 
 	// Implementation of the getLowInventoryProducts method - just a silly example

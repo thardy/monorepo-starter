@@ -44,7 +44,7 @@ const createUserContext = (): IUserContext => ({
   }
 });
 
-describe('GenericApiService - Integration Tests', () => {
+describe('[library] GenericApiService - Integration Tests', () => {
   let mongoServer: MongoMemoryServer;
   let mongoClient: MongoClient;
   let db: Db;

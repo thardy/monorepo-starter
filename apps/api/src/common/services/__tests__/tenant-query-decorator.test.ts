@@ -2,22 +2,26 @@ import { describe, it, expect } from 'vitest';
 import { TenantQueryDecorator, ITenantQueryOptions, DEFAULT_TENANT_OPTIONS } from '../tenant-query-decorator.js';
 import { IUserContext, QueryOptions, IEntity } from '#common/models/index';
 import { ServerError } from '#common/errors/index';
+import { ObjectId } from 'mongodb';
 
 // Create a simple implementation of IEntity for testing
 interface TestEntity extends IEntity {
   name: string;
 }
 
-describe('TenantQueryDecorator', () => {
+/**
+ * @library
+ */
+describe('[library] TenantQueryDecorator', () => {
   // Test data
   const orgId = 'test-org-123';
   const userContext: IUserContext = {
-    user: { id: 'test-user', email: 'test@example.com' },
+    user: { _id: new ObjectId(), email: 'test@example.com' },
     orgId
   };
   
   const userContextWithoutOrg: IUserContext = {
-    user: { id: 'test-user', email: 'test@example.com' }
+    user: { _id: new ObjectId(), email: 'test@example.com' }
   };
   
   const collectionName = 'testCollection';

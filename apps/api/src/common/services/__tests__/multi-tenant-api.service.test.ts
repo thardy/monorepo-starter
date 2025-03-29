@@ -22,7 +22,7 @@ const createUserContext = (orgId: string): IUserContext => ({
 // Creates a valid MongoDB ObjectId string
 const createValidObjectId = () => new ObjectId().toString();
 
-describe('MultiTenantApiService', () => {
+describe('[library] MultiTenantApiService', () => {
   // Mock dependencies
   let mockDb: Db;
   let mockCollection: Collection;

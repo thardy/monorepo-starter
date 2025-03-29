@@ -3,6 +3,7 @@ import moment from 'moment';
 import _ from 'lodash';
 import { BadRequestError, DuplicateKeyError, IdNotFoundError, NotFoundError, ServerError } from '../errors/index.js';
 import { ValueError } from '@sinclair/typebox/errors';
+import { Value } from '@sinclair/typebox/value';
 
 import { IGenericApiService } from './generic-api-service.interface.js';
 import { IAuditable, IUserContext, IEntity, QueryOptions, IPagedResult, IModelSpec } from '../models/index.js';
@@ -601,14 +602,22 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
     // Apply appropriate auditing based on operation type if the entity is auditable
     if (entityUtils.isAuditable(preparedEntity)) {
       if (isCreate) {
-        this.auditForCreate(userContext, preparedEntity as IAuditable);
+        this.auditForCreate(userContext, preparedEntity);
       } else {
-        this.auditForUpdate(userContext, preparedEntity as IAuditable);
+        this.auditForUpdate(userContext, preparedEntity);
       }
     }
 
     // Convert any foreign keys to ObjectIds
     entityUtils.convertForeignKeysToObjectIds(preparedEntity);
+
+    // Use TypeBox to clean properties not in the schema if a model spec is provided
+    if (this.modelSpec) {
+      // Use type assertion to handle potential unknown return type
+      const cleanedEntity = Value.Clean(this.modelSpec.fullSchema, preparedEntity) as T | Partial<T>;
+      
+      return cleanedEntity;
+    }
 
     return preparedEntity;
   }

@@ -6,6 +6,7 @@ import { IUserContext, QueryOptions, IEntity } from '../../models/index.js';
 import { Type } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { IdNotFoundError, DuplicateKeyError, BadRequestError } from '../../errors/index.js';
+import { entityUtils } from '../../utils/entity.utils.js';
 
 // Define a test entity interface
 interface TestEntity extends IEntity {
@@ -29,12 +30,7 @@ const TestEntitySchema = Type.Object({
 const PartialTestEntitySchema = Type.Partial(TestEntitySchema);
 
 // Create model spec object
-const testModelSpec = {
-  schema: TestEntitySchema,
-  partialSchema: PartialTestEntitySchema,
-  validator: TypeCompiler.Compile(TestEntitySchema),
-  partialValidator: TypeCompiler.Compile(PartialTestEntitySchema)
-};
+const testModelSpec = entityUtils.getModelSpec(TestEntitySchema, { isAuditable: true });
 
 // Helper function to create a mock user context
 const createUserContext = (): IUserContext => ({
@@ -354,6 +350,46 @@ describe('[library] GenericApiService - Integration Tests', () => {
       expect(updatedEntity.name).toBe('Initial Entity'); // Unchanged
       expect(updatedEntity.description).toBe('Updated description only');
       expect(updatedEntity.isActive).toBe(true); // Unchanged
+    });
+    
+    it('should strip properties not defined in the schema while preserving system properties', async () => {
+      // Arrange
+      const userContext = createUserContext();
+      
+      // Create an entity with an extra property not defined in the schema
+      const testEntity: any = {
+        name: 'Entity with extra props',
+        extraProperty: 'This property is not in the schema',
+        anotherExtraProperty: 42,
+        nestedExtra: { foo: 'bar' }
+      };
+      
+      // Act
+      const createdEntity = await service.create(userContext, testEntity as TestEntity);
+      const retrievedEntity = await service.getById(userContext, createdEntity!._id.toString());
+      
+      // Assert
+      expect(createdEntity).toBeDefined();
+      expect(createdEntity!.name).toBe(testEntity.name);
+      
+      // Check that extra properties were stripped out
+      expect((createdEntity as any).extraProperty).toBeUndefined();
+      expect((createdEntity as any).anotherExtraProperty).toBeUndefined();
+      expect((createdEntity as any).nestedExtra).toBeUndefined();
+      
+      // Check that they're also not present when retrieving
+      expect((retrievedEntity as any).extraProperty).toBeUndefined();
+      expect((retrievedEntity as any).anotherExtraProperty).toBeUndefined();
+      expect((retrievedEntity as any).nestedExtra).toBeUndefined();
+      
+      // Check that system properties were preserved
+      expect(retrievedEntity._id).toBeDefined();
+      if (entityUtils.isAuditable(retrievedEntity)) {
+        expect((retrievedEntity as any).created).toBeDefined();
+        expect((retrievedEntity as any).createdBy).toBeDefined();
+        expect((retrievedEntity as any).updated).toBeDefined();
+        expect((retrievedEntity as any).updatedBy).toBeDefined();
+      }
     });
   });
   

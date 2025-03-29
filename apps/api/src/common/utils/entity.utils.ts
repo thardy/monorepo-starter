@@ -3,6 +3,10 @@ import { ObjectId } from 'mongodb';
 import { TSchema, Type } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { ValueError } from '@sinclair/typebox/errors';
+import { EntitySchema } from '../models/entity.interface.js';
+import { AuditableSchema } from '../models/auditable.interface.js';
+import { MultiTenantEntitySchema } from '../models/multi-tenant-entity.interface.js';
+import { IAuditable } from '../models/auditable.interface.js';
 
 /**
  * List of property names that should not be converted to ObjectIds, even if they end with 'Id'
@@ -16,24 +20,55 @@ export const PROPERTIES_THAT_ARE_NOT_OBJECT_IDS = ['orgId'];
  * @returns A compiled validator for the schema
  */
 function getValidator(schema: TSchema): ReturnType<typeof TypeCompiler.Compile> {
-  return TypeCompiler.Compile(schema);
+  const validator = TypeCompiler.Compile(schema);
+  //console.log(JSON.stringify(schema, null, 2)); // todo: comment me out
+  return validator;
 }
 
 /**
  * Creates an object with schema and validators - everything needed for validation
  * @param schema The original TypeBox schema
- * @returns Object containing schema, partialSchema, validator, and partialVAlidator
+ * @param options Configuration options (e.g., { isAuditable: true, isMultiTenant: true })
+ * @returns Object containing schema, partialSchema, fullSchema, validator, partialValidator, and fullValidator
  */
-function getModelSpec<T extends TSchema>(schema: T) {
+function getModelSpec<T extends TSchema>(
+  schema: T, 
+  options: { isAuditable?: boolean; isMultiTenant?: boolean } = {}
+) {
   const partialSchema = Type.Partial(schema);
+  
+  // Create array of schemas to include in the full schema
+  const schemasToIntersect = [];
+  schemasToIntersect.push(schema);
+  schemasToIntersect.push(EntitySchema);
+  
+  if (options.isAuditable) {
+    schemasToIntersect.push(AuditableSchema);
+  }
+  
+  if (options.isMultiTenant) {
+    schemasToIntersect.push(MultiTenantEntitySchema);
+  }
+  
+  // Create the full schema using Type.Intersect
+  const fullSchema = Type.Intersect(schemasToIntersect);
+  const fullPartialSchema = Type.Partial(fullSchema);
+  
+  // Create validators for all schemas
   const validator = getValidator(schema);
   const partialValidator = getValidator(partialSchema);
+  const fullValidator = getValidator(fullSchema);
+  const fullPartialValidator = getValidator(fullPartialSchema);
   
   return {
     schema,
     partialSchema,
+    fullSchema,
+    fullPartialSchema,
     validator,
-    partialValidator
+    partialValidator,
+    fullValidator,
+    fullPartialValidator
   };
 }
 
@@ -113,15 +148,15 @@ function convertForeignKeysToObjectIds(doc: any, ignoredProperties: string[] = P
 /**
  * Checks if the provided entity implements the IAuditable interface by checking for audit properties
  * @param entity The entity to check
- * @returns true if the entity has audit properties (created, createdBy, updated, updatedBy)
+ * @returns true if the entity has audit properties (_created, _createdBy, _updated, _updatedBy)
  */
-function isAuditable(entity: any): boolean {
+function isAuditable(entity: any): entity is IAuditable {
   return entity !== null && 
     typeof entity === 'object' && 
-    (entity.hasOwnProperty('created') || 
-     entity.hasOwnProperty('createdBy') || 
-     entity.hasOwnProperty('updated') || 
-     entity.hasOwnProperty('updatedBy'));
+    (entity.hasOwnProperty('_created') || 
+     entity.hasOwnProperty('_createdBy') || 
+     entity.hasOwnProperty('_updated') || 
+     entity.hasOwnProperty('_updatedBy'));
 }
 
 export const entityUtils =  {

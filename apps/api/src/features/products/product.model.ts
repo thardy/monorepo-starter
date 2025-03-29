@@ -10,12 +10,12 @@ export interface IProduct extends IEntity, IAuditable {
   description?: string;
   price: number;
   quantity: number;
+  someDate: Date;
 }
 
 // Product-specific properties schema
 export const ProductSchema = Type.Object({
   name: Type.String({
-    errorMessage: 'Product name is required',
     title: 'Name'
   }),
   description: Type.Optional(Type.String({
@@ -24,18 +24,19 @@ export const ProductSchema = Type.Object({
   price: Type.Number({
     minimum: 0,
     multipleOf: 0.01,
-    //errorMessage: 'Price must be a positive number',
     title: 'Price'
   }),
   quantity: Type.Number({
     minimum: 10,
     multipleOf: 5,
-    //errorMessage: 'Quantity must be a positive integer',
     title: 'Quantity'
+  }),
+  someDate: Type.Date({
+    title: 'Some Date'
   })
 });
 
-export const ProductSpec = entityUtils.getModelSpec(ProductSchema);
+export const ProductSpec = entityUtils.getModelSpec(ProductSchema, { isAuditable: true });
 
 // // TypeScript type - this only contains the product properties (name, description, price, quantity). Is this needed?
 // export type ProductType = Static<typeof ProductSchema>;

@@ -13,8 +13,13 @@ export interface IModelSpec<T extends TSchema = TSchema> {
   /**
    * Partial version of the schema for validating update operations
    */
-  partialSchema: TSchema;
+  partialSchema: T;
   
+  /**
+   * Full version of the schema for validating complete documents
+   */
+  fullSchema: T;
+
   /**
    * Compiled validator for the primary schema
    */
@@ -24,4 +29,9 @@ export interface IModelSpec<T extends TSchema = TSchema> {
    * Compiled validator for the partial schema
    */
   partialValidator: ReturnType<typeof TypeCompiler.Compile>;
+  
+  /**
+   * Compiled validator for the full schema
+   */
+  fullValidator: ReturnType<typeof TypeCompiler.Compile>;
 } 

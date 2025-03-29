@@ -21,12 +21,12 @@
     "build:prod": "tsc --project tsconfig.prod.json --traceResolution --extendedDiagnostics",
     "typecheck": "tsc",
     "test": "cross-env NODE_ENV=test vitest run -t \"^(?!.*\\[library\\]).*$\"",
+    "test:ci": "cross-env NODE_ENV=test vitest run -t \"^(?!.*\\[library\\])\" --reporter=json --outputFile=test-results.json",
     "test:all": "cross-env NODE_ENV=test vitest run",
     "test:library": "cross-env NODE_ENV=test vitest run -t \"\\[library\\]\"",
     "test:watch": "cross-env NODE_ENV=test vitest -t \"^(?!.*\\[library\\]).*$\"",
     "test:watch:all": "cross-env NODE_ENV=test vitest",
     "test:watch:library": "cross-env NODE_ENV=test vitest -t \"\\[library\\]\"",
-    "test:ci": "cross-env NODE_ENV=test vitest run --reporter=json --outputFile=test-results.json",
     "coverage": "cross-env NODE_ENV=test vitest run --coverage"
   },
   "dependencies": {

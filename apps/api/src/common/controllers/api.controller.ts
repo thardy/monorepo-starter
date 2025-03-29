@@ -24,14 +24,24 @@ export abstract class ApiController<T extends IEntity> {
   mapRoutes(app: Application) {
 		// Map routes
     // have to bind "this" because when express calls the function we tell it to here, it won't have any context and "this" will be undefined in our functions
-    app.get(`/api/${this.slug}`, isAuthenticated, this.get.bind(this));
-	  app.get(`/api/${this.slug}/all`, isAuthenticated, this.getAll.bind(this));
-	  app.get(`/api/${this.slug}/count`, isAuthenticated, this.getCount.bind(this));
-	  app.get(`/api/${this.slug}/:id`, isAuthenticated, this.getById.bind(this));
-	  app.post(`/api/${this.slug}`, isAuthenticated, this.create.bind(this));
-	  app.put(`/api/${this.slug}/:id`, isAuthenticated, this.fullUpdateById.bind(this));
-		app.patch(`/api/${this.slug}/:id`, isAuthenticated, this.partialUpdateById.bind(this));
-    app.delete(`/api/${this.slug}/:id`, isAuthenticated, this.deleteById.bind(this));
+    // app.get(`/api/${this.slug}`, isAuthenticated, this.get.bind(this));
+	  // app.get(`/api/${this.slug}/all`, isAuthenticated, this.getAll.bind(this));
+	  // app.get(`/api/${this.slug}/count`, isAuthenticated, this.getCount.bind(this));
+	  // app.get(`/api/${this.slug}/:id`, isAuthenticated, this.getById.bind(this));
+	  // app.post(`/api/${this.slug}`, isAuthenticated, this.create.bind(this));
+	  // app.put(`/api/${this.slug}/:id`, isAuthenticated, this.fullUpdateById.bind(this));
+		// app.patch(`/api/${this.slug}/:id`, isAuthenticated, this.partialUpdateById.bind(this));
+    // app.delete(`/api/${this.slug}/:id`, isAuthenticated, this.deleteById.bind(this));
+    
+    // all of the above, just without the isAuthenticated middleware
+    app.get(`/api/${this.slug}`, this.get.bind(this));
+	  app.get(`/api/${this.slug}/all`, this.getAll.bind(this));
+	  app.get(`/api/${this.slug}/count`, this.getCount.bind(this));
+	  app.get(`/api/${this.slug}/:id`, this.getById.bind(this));
+	  app.post(`/api/${this.slug}`, this.create.bind(this));
+	  app.put(`/api/${this.slug}/:id`, this.fullUpdateById.bind(this));
+		app.patch(`/api/${this.slug}/:id`, this.partialUpdateById.bind(this));
+    app.delete(`/api/${this.slug}/:id`, this.deleteById.bind(this));
   }
 
   async getAll(req: Request, res: Response, next: NextFunction) {

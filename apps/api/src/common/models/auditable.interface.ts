@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import { Type } from '@sinclair/typebox';
 
 export interface IAuditable {
@@ -12,8 +11,8 @@ export interface IAuditable {
  * Schema definition for the IAuditable interface to be used in validation and cleaning
  */
 export const AuditableSchema = Type.Object({
-  _created: Type.Date(),
+  _created: Type.String({ format: 'date-time' }),
   _createdBy: Type.String(),
-  _updated: Type.Date(),
+  _updated: Type.String({ format: 'date-time' }),
   _updatedBy: Type.String(),
 });

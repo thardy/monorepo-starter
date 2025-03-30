@@ -9,7 +9,7 @@ const loadConfig = (): IApiConfig => {
     hostName: process.env.HOST_NAME ?? '',
     mongoUri: process.env.MONGO_URI ?? '',
     databaseName: process.env.MONGO_DB_NAME ?? '' ,
-    port: parseInt(process.env.PORT ?? '5001', 10),
+    externalPort: parseInt(process.env.EXTERNAL_PORT ?? '5001', 10),
     jwtSecret: process.env.JWT_SECRET ?? 'fallback_secret',
     corsAllowedOrigins: process.env.CORS_ALLOWED_ORIGINS?.split(',') ?? [],
   };

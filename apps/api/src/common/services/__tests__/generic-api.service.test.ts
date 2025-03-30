@@ -2,14 +2,15 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Db, MongoClient, Collection, ObjectId } from 'mongodb';
 import { GenericApiService } from '../generic-api.service.js';
-import { IUserContext, QueryOptions, IEntity } from '../../models/index.js';
+import { IUserContext, QueryOptions, IEntity, IAuditable, EmptyUserContext } from '../../models/index.js';
 import { Type } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { IdNotFoundError, DuplicateKeyError, BadRequestError } from '../../errors/index.js';
 import { entityUtils } from '../../utils/entity.utils.js';
+import moment from 'moment';
 
 // Define a test entity interface
-interface TestEntity extends IEntity {
+interface TestEntity extends IEntity, IAuditable {
   name: string;
   description?: string;
   isActive?: boolean;
@@ -36,8 +37,13 @@ const testModelSpec = entityUtils.getModelSpec(TestEntitySchema, { isAuditable: 
 const createUserContext = (): IUserContext => ({
   user: { 
     _id: new ObjectId(),
-    email: 'test@example.com' 
-  }
+    email: 'test@example.com',
+    _created: new Date(),
+    _createdBy: 'system',
+    _updated: new Date(),
+    _updatedBy: 'system'
+  },
+  orgId: '67e8e19b149f740323af93d7'
 });
 
 describe('[library] GenericApiService - Integration Tests', () => {
@@ -46,6 +52,7 @@ describe('[library] GenericApiService - Integration Tests', () => {
   let db: Db;
   let service: GenericApiService<TestEntity>;
   let collection: Collection;
+  let mockUserContext: IUserContext;
   
   // Set up MongoDB Memory Server before all tests
   beforeAll(async () => {
@@ -54,6 +61,26 @@ describe('[library] GenericApiService - Integration Tests', () => {
     mongoClient = new MongoClient(uri);
     await mongoClient.connect();
     db = mongoClient.db('test-db');
+    
+    // Create service with auditable model spec
+    service = new GenericApiService<TestEntity>(
+      db,
+      'testEntities',
+      'testEntity',
+      testModelSpec
+    );
+    
+    mockUserContext = {
+      user: {
+        _id: new ObjectId('5f7d5dc35a3a3a0b8c7b3e0d'),
+        email: 'test@example.com',
+        _created: new Date(),
+        _createdBy: 'system',
+        _updated: new Date(),
+        _updatedBy: 'system'
+      },
+      orgId: '67e8e19b149f740323af93d7'
+    };
   });
   
   // Clean up MongoDB Memory Server after all tests
@@ -75,14 +102,6 @@ describe('[library] GenericApiService - Integration Tests', () => {
       });
     }
     collection = db.collection('testEntities');
-    
-    // Create test service
-    service = new GenericApiService<TestEntity>(
-      db,
-      'testEntities',
-      'testEntity',
-      testModelSpec
-    );
   });
   
   // Clean up after each test
@@ -385,10 +404,10 @@ describe('[library] GenericApiService - Integration Tests', () => {
       // Check that system properties were preserved
       expect(retrievedEntity._id).toBeDefined();
       if (entityUtils.isAuditable(retrievedEntity)) {
-        expect((retrievedEntity as any).created).toBeDefined();
-        expect((retrievedEntity as any).createdBy).toBeDefined();
-        expect((retrievedEntity as any).updated).toBeDefined();
-        expect((retrievedEntity as any).updatedBy).toBeDefined();
+        expect((retrievedEntity as any)._created).toBeDefined();
+        expect((retrievedEntity as any)._createdBy).toBeDefined();
+        expect((retrievedEntity as any)._updated).toBeDefined();
+        expect((retrievedEntity as any)._updatedBy).toBeDefined();
       }
     });
   });
@@ -438,6 +457,183 @@ describe('[library] GenericApiService - Integration Tests', () => {
       await expect(
         service.create(userContext, entity2 as TestEntity)
       ).rejects.toThrow(DuplicateKeyError);
+    });
+  });
+  
+  describe('auditable functionality', () => {
+    it('should add all auditable properties on creation when model is auditable', async () => {
+      // Arrange
+      const entity: Partial<TestEntity> = { name: 'AuditTest' };
+      
+      // Act
+      const result = await service.create(mockUserContext, entity as TestEntity);
+      
+      // Assert
+      expect(result).not.toBeNull();
+      if (result) {
+        expect(result._created).toBeDefined();
+        expect(result._createdBy).toBe(mockUserContext.user._id.toString());
+        expect(result._updated).toBeDefined();
+        expect(result._updatedBy).toBe(mockUserContext.user._id.toString());
+      }
+    });
+
+    it('should not add auditable properties when model is not auditable', async () => {
+      // Create a non-auditable service
+      const nonAuditableModelSpec = entityUtils.getModelSpec(TestEntitySchema, { isAuditable: false });
+      const nonAuditableService = new GenericApiService<TestEntity>(
+        db,
+        'testEntities',
+        'testEntity',
+        nonAuditableModelSpec
+      );
+      
+      // Arrange
+      const entity: Partial<TestEntity> = { name: 'NonAuditTest' };
+      
+      // Act
+      const result = await nonAuditableService.create(mockUserContext, entity as TestEntity);
+      
+      // Assert
+      expect(result).not.toBeNull();
+      if (result) {
+        // @ts-ignore - We're checking for the absence of these properties
+        expect(result._created).toBeUndefined();
+        // @ts-ignore
+        expect(result._createdBy).toBeUndefined();
+        // @ts-ignore
+        expect(result._updated).toBeUndefined();
+        // @ts-ignore
+        expect(result._updatedBy).toBeUndefined();
+      }
+    });
+
+    it('should update _updated and _updatedBy on update but preserve _created and _createdBy', async () => {
+      // First create an entity
+      const entity: Partial<TestEntity> = { name: 'UpdateTest' };
+      const createdEntity = await service.create(mockUserContext, entity as TestEntity);
+      expect(createdEntity).not.toBeNull();
+      
+      if (createdEntity) {
+        const originalCreated = createdEntity._created;
+        const originalCreatedBy = createdEntity._createdBy;
+        
+        // Create a new user context for the update
+        const updaterUserContext: IUserContext = {
+          user: {
+            _id: new ObjectId('5f7d5dc35a3a3a0b8c7b3e0e'),
+            email: 'updater@example.com',
+            _created: new Date(),
+            _createdBy: 'system',
+            _updated: new Date(),
+            _updatedBy: 'system'
+          },
+          orgId: '67e8e19b149f740323af93d7'
+        };
+        
+        // Wait a moment to ensure timestamps differ
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Update the entity
+        const updatedEntity = await service.partialUpdateById(
+          updaterUserContext, 
+          createdEntity._id.toString(), 
+          { name: 'Updated Test' }
+        );
+        
+        // Check audit fields
+        expect(updatedEntity._created).toEqual(createdEntity._created);
+        expect(updatedEntity._createdBy).toEqual(createdEntity._createdBy);
+        expect(updatedEntity._updated).not.toEqual(createdEntity._updated);
+        expect(updatedEntity._updatedBy).toEqual(updaterUserContext.user._id.toString());
+        
+        // Verify that the original created values were preserved
+        expect(updatedEntity._created).toEqual(originalCreated);
+        expect(updatedEntity._createdBy).toEqual(originalCreatedBy);
+      }
+    });
+
+    it('should not allow client to override audit properties on create', async () => {
+      const hackDate = moment().subtract(1, 'year').toDate();
+      
+      // TypeScript will complain about these properties, but we're explicitly testing to ensure
+      // they are ignored by the API service
+      const entity = { 
+        name: 'TamperTest',
+        _created: hackDate,
+        _createdBy: 'hacker',
+        _updated: hackDate,
+        _updatedBy: 'hacker'
+      } as any; // Use 'any' to bypass TypeScript checks on purpose
+      
+      const result = await service.create(mockUserContext, entity);
+      
+      expect(result).not.toBeNull();
+      if (result) {
+        expect(result._created).not.toEqual(hackDate);
+        expect(result._createdBy).not.toEqual('hacker');
+        expect(result._updated).not.toEqual(hackDate);
+        expect(result._updatedBy).not.toEqual('hacker');
+        expect(result._createdBy).toEqual(mockUserContext.user._id.toString());
+      }
+    });
+
+    it('should not allow client to override audit properties on update', async () => {
+      // First create an entity
+      const entity: Partial<TestEntity> = { name: 'TamperUpdateTest' };
+      const createdEntity = await service.create(mockUserContext, entity as TestEntity);
+      expect(createdEntity).not.toBeNull();
+      
+      if (createdEntity) {
+        // Wait a moment to ensure timestamps differ
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Try to tamper with audit properties during update
+        const hackDate = moment().subtract(1, 'year').toDate();
+        
+        // Use 'any' to bypass TypeScript checks for audit properties
+        const tamperedUpdate = {
+          name: 'Updated Name',
+          _created: hackDate,
+          _createdBy: 'hacker',
+          _updated: hackDate,
+          _updatedBy: 'hacker'
+        } as any;
+        
+        const updatedEntity = await service.partialUpdateById(
+          mockUserContext,
+          createdEntity._id.toString(),
+          tamperedUpdate
+        );
+        
+        // Verify audit properties were not tampered with
+        expect(updatedEntity._created).toEqual(createdEntity._created);
+        expect(updatedEntity._createdBy).toEqual(createdEntity._createdBy);
+        expect(updatedEntity._updated).not.toEqual(createdEntity._updated); // Should be updated with current timestamp
+        expect(updatedEntity._updatedBy).toEqual(mockUserContext.user._id.toString());
+      }
+    });
+
+    it('should handle system updates without a user context', async () => {
+      // Create with user context
+      const entity: Partial<TestEntity> = { name: 'SystemUpdateTest' };
+      const createdEntity = await service.create(mockUserContext, entity as TestEntity);
+      expect(createdEntity).not.toBeNull();
+      
+      if (createdEntity) {
+        // Update without user context (system update)
+        const updatedEntity = await service.partialUpdateById(
+          EmptyUserContext, 
+          createdEntity._id.toString(),
+          { name: 'System Updated' }
+        );
+        
+        // Verify system is recorded as updater
+        expect(updatedEntity._updated).toBeDefined();
+        expect(updatedEntity._updatedBy).toEqual('system');
+        expect(updatedEntity._created).toEqual(createdEntity._created);
+        expect(updatedEntity._createdBy).toEqual(createdEntity._createdBy);
+      }
     });
   });
 }); 

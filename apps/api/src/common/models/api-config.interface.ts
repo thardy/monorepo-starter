@@ -3,7 +3,7 @@ export interface IApiConfig {
   hostName: string;
   mongoUri: string;
   databaseName: string;
-  port: number;
+  externalPort: number;
   jwtSecret: string;
   corsAllowedOrigins: string[];
 }

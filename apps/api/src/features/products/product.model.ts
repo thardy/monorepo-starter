@@ -1,8 +1,9 @@
 // import mongoose, { Schema, Document, Types, ObjectId } from 'mongoose';
 import { Type, Static } from '@sinclair/typebox';
 import { IAuditable } from '#root/src/common/models/auditable.interface';
-import { IEntity } from '#root/src/common/models/entity.interface';
+import { IEntity } from '#common/models/index';
 import { entityUtils } from '#common/utils/index';
+import { Money } from '#common/validation/index';
 
 // TypeScript interface - this contains the product properties (name, description, price, quantity) and the entity and auditable properties
 export interface IProduct extends IEntity, IAuditable {
@@ -21,18 +22,17 @@ export const ProductSchema = Type.Object({
   description: Type.Optional(Type.String({
     title: 'Description'
   })),
-  price: Type.Number({
+  price: Money({
     minimum: 0,
-    multipleOf: 0.01,
     title: 'Price'
   }),
   quantity: Type.Number({
-    minimum: 10,
-    multipleOf: 5,
+    minimum: 0,
     title: 'Quantity'
   }),
-  someDate: Type.Date({
-    title: 'Some Date'
+  someDate: Type.String({
+    title: 'Some Date',
+    format: 'date-time'
   })
 });
 

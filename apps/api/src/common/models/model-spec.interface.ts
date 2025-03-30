@@ -13,7 +13,7 @@ export interface IModelSpec<T extends TSchema = TSchema> {
   /**
    * Partial version of the schema for validating update operations
    */
-  partialSchema: T;
+  partialSchema: TSchema;
   
   /**
    * Full version of the schema for validating complete documents
@@ -34,4 +34,14 @@ export interface IModelSpec<T extends TSchema = TSchema> {
    * Compiled validator for the full schema
    */
   fullValidator: ReturnType<typeof TypeCompiler.Compile>;
+
+  /**
+   * Indicates whether the model is auditable
+   */
+  isAuditable?: boolean;
+
+  /**
+   * Indicates whether the model is multi-tenant
+   */
+  isMultiTenant?: boolean;
 } 

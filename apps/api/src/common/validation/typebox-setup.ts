@@ -2,6 +2,11 @@ import { Type } from '@sinclair/typebox';
 import { ObjectId } from 'mongodb';
 import { DefaultErrorFunction, ErrorFunctionParameter, ValueErrorType, SetErrorFunction } from '@sinclair/typebox/errors'
 import { Kind } from '@sinclair/typebox'
+import { FormatRegistry } from '@sinclair/typebox'
+import { IsDateTime } from './formats/date-time.js'
+import { IsDate } from './formats/date.js'
+// Import our extensions to ensure they're initialized
+import './typebox-extensions.js';
 
 
 // Custom objectId validator function
@@ -24,9 +29,41 @@ export const initializeTypeBox = () => {
   // Configure TypeBox error messages
   SetErrorFunction(customSetErrorFunction);
   
+  // Register custom format validators
+  FormatRegistry.Set('objectId', isValidObjectId);
+  FormatRegistry.Set('date-time', value => IsDateTime(value));
+  FormatRegistry.Set('date', value => IsDate(value));
+  
   console.log('TypeBox custom validations initialized');
 }; 
 
+// Date-time transform utility functions
+export const IsoDate = Type.Transform(Type.String({ format: 'date-time' }))
+  .Decode(value => new Date(value))
+  .Encode(value => value.toISOString());
+
+// Date transform utility functions
+export const DateTransform = Type.Transform(Type.String({ format: 'date' }))
+  .Decode(value => {
+    const date = new Date(value);
+    // Set time to midnight UTC to ensure consistent date-only representation
+    date.setUTCHours(0, 0, 0, 0);
+    return date;
+  })
+  .Encode(value => {
+    // Format as YYYY-MM-DD
+    return value.toISOString().split('T')[0];
+  });
+
+// Example usage of the IsoDate transform functions...
+// Check it (validation)
+// const R = Value.Check(IsoDate, '2024-04-30T08:54:33.666Z') // true
+
+// Decode it (converts from string to Date object)
+// const D = Value.Decode(IsoDate, '2024-04-30T08:54:33.666Z') // Date(2024-04-30T08:54:33.666Z)
+
+// Encode it (converts from Date object to string)
+// const E = Value.Encode(IsoDate, D)                          // '2024-04-30T08:54:33.666Z'
 
 // ------------------------------------------------------------------
 // Overrides TypeBox Error Message Generation
@@ -105,7 +142,7 @@ const customSetErrorFunction = (error: ErrorFunctionParameter) => {
     case ValueErrorType.Not:
       return `${fieldName} must not be ${JSON.stringify(error.schema)}`
     case ValueErrorType.Null:
-      return `${fieldName} must be null`
+      return `${fieldName} must be null`    
     case ValueErrorType.NumberExclusiveMaximum:
       return `${fieldName} must be less than ${error.schema.exclusiveMaximum}`
     case ValueErrorType.NumberExclusiveMinimum:

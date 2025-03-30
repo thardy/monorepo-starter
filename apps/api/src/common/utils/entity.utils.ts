@@ -2,11 +2,8 @@ import { BadRequestError, ServerError, ValidationError } from '../errors/index.j
 import { ObjectId } from 'mongodb';
 import { TSchema, Type } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
-import { ValueError } from '@sinclair/typebox/errors';
-import { EntitySchema } from '../models/entity.interface.js';
-import { AuditableSchema } from '../models/auditable.interface.js';
-import { MultiTenantEntitySchema } from '../models/multi-tenant-entity.interface.js';
-import { IAuditable } from '../models/auditable.interface.js';
+import { ValueError, ValueErrorType } from '@sinclair/typebox/errors';
+import { EntitySchema, AuditableSchema, MultiTenantEntitySchema, IAuditable, IModelSpec } from '../models/index.js';
 
 /**
  * List of property names that should not be converted to ObjectIds, even if they end with 'Id'
@@ -21,7 +18,7 @@ export const PROPERTIES_THAT_ARE_NOT_OBJECT_IDS = ['orgId'];
  */
 function getValidator(schema: TSchema): ReturnType<typeof TypeCompiler.Compile> {
   const validator = TypeCompiler.Compile(schema);
-  //console.log(JSON.stringify(schema, null, 2)); // todo: comment me out
+  // console.log(JSON.stringify(schema, null, 2)); // uncomment to see the actual json-schema for each model 
   return validator;
 }
 
@@ -34,7 +31,7 @@ function getValidator(schema: TSchema): ReturnType<typeof TypeCompiler.Compile> 
 function getModelSpec<T extends TSchema>(
   schema: T, 
   options: { isAuditable?: boolean; isMultiTenant?: boolean } = {}
-) {
+): IModelSpec {
   const partialSchema = Type.Partial(schema);
   
   // Create array of schemas to include in the full schema
@@ -68,7 +65,9 @@ function getModelSpec<T extends TSchema>(
     validator,
     partialValidator,
     fullValidator,
-    fullPartialValidator
+    fullPartialValidator,
+    isAuditable: !!options.isAuditable,
+    isMultiTenant: !!options.isMultiTenant
   };
 }
 
@@ -85,7 +84,27 @@ function validate(
   const valid = validator.Check(data);
   
   if (!valid) {
-    return [...validator.Errors(data)];
+    const errors = [...validator.Errors(data)];
+    
+    // Debug logging for multipleOf errors
+    errors.forEach(error => {
+      console.log('Validation error:', error);
+      // Log more details about the error
+      if (error.schema && error.schema.multipleOf) {
+        console.log('MultipleOf validation error details:');
+        console.log('- Value:', error.value);
+        console.log('- Schema:', error.schema);
+        console.log('- Path:', error.path);
+        // Check mathematical test
+        if (typeof error.value === 'number' && typeof error.schema.multipleOf === 'number') {
+          console.log('- Modulo result:', error.value % error.schema.multipleOf);
+          console.log('- Division result:', error.value / error.schema.multipleOf);
+          console.log('- Is integer check:', Number.isInteger(error.value / error.schema.multipleOf));
+        }
+      }
+    });
+    
+    return errors;
   }
   
   return null;
@@ -159,6 +178,23 @@ function isAuditable(entity: any): entity is IAuditable {
      entity.hasOwnProperty('_updatedBy'));
 }
 
+/**
+ * Helper function to fix floating-point precision issues with decimal numbers
+ * @param value The number to check
+ * @param multipleOf The value to check if value is a multiple of
+ * @param precision The decimal precision (number of decimal places)
+ * @returns true if value is a multiple of multipleOf within the given precision
+ */
+function isDecimalMultipleOf(value: number, multipleOf: number, precision: number = 2): boolean {
+  // Scale both numbers by multiplying by 10^precision to work with integers
+  const scale = Math.pow(10, precision);
+  const scaledValue = Math.round(value * scale);
+  const scaledMultipleOf = Math.round(multipleOf * scale);
+  
+  // Now we can check if the scaled value is a multiple of the scaled multipleOf
+  return scaledValue % scaledMultipleOf === 0;
+}
+
 export const entityUtils =  {
   handleValidationResult,
   isValidObjectId,
@@ -167,5 +203,6 @@ export const entityUtils =  {
   PROPERTIES_THAT_ARE_NOT_OBJECT_IDS,
   getValidator,
   getModelSpec,
-  validate
+  validate,
+  isDecimalMultipleOf
 };

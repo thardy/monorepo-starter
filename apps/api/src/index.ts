@@ -37,12 +37,16 @@ const startServer = async () => {
   }
 
   if (db) {
-    externalServer = externalApp.listen(config.port, () => {
-      console.log(`monorepo-starter-api listening on port ${config.port} (${config.env})!!!`);
+    // internalServer = internalApp.listen(config.internalPort, () => {
+		//   console.log(`risk-answers-api (internal) listening on port ${config.internalPort} (inside k8s cluster). env = (${config.env})!!!`);
+	  // });
+    externalServer = externalApp.listen(config.externalPort, () => {
+      console.log(`risk-answers-api (external) listening on port ${config.externalPort} (inside k8s cluster). env = (${config.env})!!!`);
+      console.log(`k8s ingress maps external to ${config.hostName}/api!!! You should have ${config.hostName} mapped in your hosts file to 127.0.0.1.`);
     });
   }
   else {
-    await cleanup('DATABASE_CONNECTION_ERROR');
+    cleanup('DATABASE_CONNECTION_ERROR');
   }
 };
 

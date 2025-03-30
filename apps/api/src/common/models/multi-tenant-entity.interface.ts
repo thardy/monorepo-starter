@@ -9,5 +9,6 @@ export interface IMultiTenantEntity extends IEntity {
  * Schema definition for the IMultiTenantEntity interface to be used in validation and cleaning
  */
 export const MultiTenantEntitySchema = Type.Object({
+  _id: Type.String({ format: 'objectId' }),
   _orgId: Type.String(),
 });

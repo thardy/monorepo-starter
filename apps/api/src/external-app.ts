@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import 'express-async-errors';
 import bodyParser from 'body-parser';
 import {NotFoundError} from '#common/errors/index';
-import {errorHandler} from '#common/middleware/index';
+import {ensureUserContext, errorHandler} from '#common/middleware/index';
 import cors from 'cors';
 
 import routes from '#server/routes/routes';
@@ -28,6 +28,7 @@ function setupExternalExpress(db: Db) {
 		origin: config.corsAllowedOrigins,
 		credentials: true
 	}));
+  externalApp.use(ensureUserContext);
 
   routes(externalApp, db); // routes calls every controller to map its own routes
 

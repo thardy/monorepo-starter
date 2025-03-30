@@ -268,7 +268,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   }
 
   async fullUpdateById(userContext: IUserContext, id: string, entity: T): Promise<T> {
-    // this is not the most performant function - In order to protect system properties (like created). it retrieves the
+    // this is not the most performant function - In order to protect system properties (like _created). it retrieves the
     //  existing entity, updates using the supplied entity, then retrieves the entity again. We could avoid the final
     //  fetch if we manually crafted the returned entity, but that seems presumptuous, especially
     //  as the update process gets more complex. PREFER using partialUpdateById.
@@ -290,8 +290,8 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
 
     // Preserve system properties that should not be updated
     const auditProperties = {
-      created: existingEntity.created,
-      createdBy: existingEntity.createdBy,
+      _created: existingEntity._created,
+      _createdBy: existingEntity._createdBy,
     };
 
     // Call onBeforeUpdate once with the entity
@@ -459,18 +459,17 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
     return this.transformSingle(entity);
   }
 
-  auditForCreate(userContext: IUserContext | undefined, doc: IAuditable) {
+  auditForCreate(userContext: IUserContext, doc: any) {
     const now = moment().utc().toDate();
-    // const userId = current.context && current.context.current && current.context.current.user ? current.context.user.email : 'system';
-    const userId = userContext?.user?._id?.toString() ?? 'system';
+    const userId = userContext.user?._id?.toString() ?? 'system';
     doc._created = now;
     doc._createdBy = userId;
     doc._updated = now;
     doc._updatedBy = userId;
   }
 
-  auditForUpdate(userContext: IUserContext | undefined, doc: IAuditable) {
-    const userId = userContext?.user?._id?.toString() ?? 'system';
+  auditForUpdate(userContext: IUserContext, doc: any) {
+    const userId = userContext.user?._id?.toString() ?? 'system';
     doc._updated = moment().utc().toDate();
     doc._updatedBy = userId;
   }
@@ -483,7 +482,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
    * @param entities Entity or array of entities to be created
    * @returns The prepared entity or entities
    */
-  onBeforeCreate<E extends T | T[]>(userContext: IUserContext | undefined, entities: E): Promise<E> {
+  onBeforeCreate<E extends T | T[]>(userContext: IUserContext, entities: E): Promise<E> {
     // Apply entity preparation with isCreate=true
     const preparedEntities = this.preparePayload(userContext, entities, true);
     return Promise.resolve(preparedEntities);
@@ -508,7 +507,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
    * @param entities Entity or array of entities to be updated
    * @returns The prepared entity or entities
    */
-  onBeforeUpdate<E extends T | T[] | Partial<T> | Partial<T>[]>(userContext: IUserContext | undefined, entities: E): Promise<E> {
+  onBeforeUpdate<E extends T | T[] | Partial<T> | Partial<T>[]>(userContext: IUserContext, entities: E): Promise<E> {
     // Apply entity preparation with isCreate=false
     const preparedEntities = this.preparePayload(userContext, entities, false);
     return Promise.resolve(preparedEntities);
@@ -548,17 +547,17 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
 
   private stripSenderProvidedSystemProperties(doc: any) {
     // we don't allow users to provide/overwrite any system properties
-    if (doc.created) {
-      delete doc.created;
+    if (doc._created) {
+      delete doc._created;
     }
-    if (doc.createdBy) {
-      delete doc.createdBy;
+    if (doc._createdBy) {
+      delete doc._createdBy;
     }
-    if (doc.updated) {
-      delete doc.updated;
+    if (doc._updated) {
+      delete doc._updated;
     }
-    if (doc.updatedBy) {
-      delete doc.updatedBy;
+    if (doc._updatedBy) {
+      delete doc._updatedBy;
     }
   }
 
@@ -570,7 +569,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
    * @param isCreate Whether this is for a create operation (true) or update operation (false)
    * @returns The potentially modified entity or array of entities
    */
-  protected preparePayload<E extends T | T[] | Partial<T> | Partial<T>[]>(userContext: IUserContext | undefined, entity: E, isCreate: boolean = false): E {
+  protected preparePayload<E extends T | T[] | Partial<T> | Partial<T>[]>(userContext: IUserContext, entity: E, isCreate: boolean = false): E {
     let result: E;
 
     if (Array.isArray(entity)) {
@@ -592,7 +591,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
    * @param isCreate Whether this is for a create operation (true) or update operation (false)
    * @returns The potentially modified entity
    */
-  protected prepareEntity(userContext: IUserContext | undefined, entity: T | Partial<T>, isCreate: boolean): T | Partial<T> {
+  protected prepareEntity(userContext: IUserContext, entity: T | Partial<T>, isCreate: boolean): T | Partial<T> {
     // Clone the entity to avoid modifying the original
     const preparedEntity = _.clone(entity);
 
@@ -600,7 +599,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
     this.stripSenderProvidedSystemProperties(preparedEntity);
 
     // Apply appropriate auditing based on operation type if the entity is auditable
-    if (entityUtils.isAuditable(preparedEntity)) {
+    if (this.modelSpec?.isAuditable) {
       if (isCreate) {
         this.auditForCreate(userContext, preparedEntity);
       } else {

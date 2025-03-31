@@ -38,12 +38,12 @@ export const initializeTypeBox = () => {
 }; 
 
 // Date-time transform utility functions
-export const IsoDate = Type.Transform(Type.String({ format: 'date-time' }))
+export const TypeboxIsoDate = Type.Transform(Type.String({ format: 'date-time' }))
   .Decode(value => new Date(value))
   .Encode(value => value.toISOString());
 
 // Date transform utility functions
-export const DateTransform = Type.Transform(Type.String({ format: 'date' }))
+export const TypeboxDate = Type.Transform(Type.String({ format: 'date' }))
   .Decode(value => {
     const date = new Date(value);
     // Set time to midnight UTC to ensure consistent date-only representation
@@ -55,15 +55,32 @@ export const DateTransform = Type.Transform(Type.String({ format: 'date' }))
     return value.toISOString().split('T')[0];
   });
 
-// Example usage of the IsoDate transform functions...
+// ObjectId transform utility functions
+export const TypeboxObjectId = Type.Transform(Type.String({ format: 'objectId' }))
+  .Decode(value => {
+    // When coming from string (like JSON), convert to ObjectId
+    // For TypeBox transformers, value should always be a string during Decode
+    return new ObjectId(value as string);
+  })
+  .Encode(value => {
+    // When serializing, convert ObjectId to string
+    // Handle the case where value might already be a string
+    if (typeof value === 'string') return value;
+    // Use toString() for ObjectId or any object with toString method
+    const stringValue = (value as any).toString();
+    console.log(`stringValue: ${stringValue}`); // todo: delete me
+    return stringValue;
+  });
+
+// Example usage of the IsoDateTransform transform functions...
 // Check it (validation)
-// const R = Value.Check(IsoDate, '2024-04-30T08:54:33.666Z') // true
+// const R = Value.Check(IsoDateTransform, '2024-04-30T08:54:33.666Z') // true
 
 // Decode it (converts from string to Date object)
-// const D = Value.Decode(IsoDate, '2024-04-30T08:54:33.666Z') // Date(2024-04-30T08:54:33.666Z)
+// const D = Value.Decode(IsoDateTransform, '2024-04-30T08:54:33.666Z') // Date(2024-04-30T08:54:33.666Z)
 
 // Encode it (converts from Date object to string)
-// const E = Value.Encode(IsoDate, D)                          // '2024-04-30T08:54:33.666Z'
+// const E = Value.Encode(IsoDateTransform, D)                          // '2024-04-30T08:54:33.666Z'
 
 // ------------------------------------------------------------------
 // Overrides TypeBox Error Message Generation

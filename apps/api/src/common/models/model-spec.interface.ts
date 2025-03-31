@@ -44,4 +44,11 @@ export interface IModelSpec<T extends TSchema = TSchema> {
    * Indicates whether the model is multi-tenant
    */
   isMultiTenant?: boolean;
+
+  /**
+   * Clean method that removes properties not defined in the schema
+   * @param entity The entity to clean
+   * @returns A cleaned entity with only schema-defined properties
+   */
+  clean: <E>(entity: E) => E;
 } 

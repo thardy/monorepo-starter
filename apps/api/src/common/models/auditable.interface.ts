@@ -1,5 +1,5 @@
 import { Type } from '@sinclair/typebox';
-
+import { TypeboxIsoDate } from '../validation/typebox-setup.js';
 export interface IAuditable {
   _created: Date;
   _createdBy: string;
@@ -11,8 +11,8 @@ export interface IAuditable {
  * Schema definition for the IAuditable interface to be used in validation and cleaning
  */
 export const AuditableSchema = Type.Object({
-  _created: Type.String({ format: 'date-time' }),
+  _created: TypeboxIsoDate,
   _createdBy: Type.String(),
-  _updated: Type.String({ format: 'date-time' }),
+  _updated: TypeboxIsoDate,
   _updatedBy: Type.String(),
 });

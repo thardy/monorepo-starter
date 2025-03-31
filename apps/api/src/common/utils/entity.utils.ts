@@ -4,6 +4,7 @@ import { TSchema, Type } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { ValueError, ValueErrorType } from '@sinclair/typebox/errors';
 import { EntitySchema, AuditableSchema, MultiTenantEntitySchema, IAuditable, IModelSpec } from '../models/index.js';
+import { Value } from '@sinclair/typebox/value';
 
 /**
  * List of property names that should not be converted to ObjectIds, even if they end with 'Id'
@@ -49,25 +50,30 @@ function getModelSpec<T extends TSchema>(
   
   // Create the full schema using Type.Intersect
   const fullSchema = Type.Intersect(schemasToIntersect);
-  const fullPartialSchema = Type.Partial(fullSchema);
   
   // Create validators for all schemas
   const validator = getValidator(schema);
   const partialValidator = getValidator(partialSchema);
   const fullValidator = getValidator(fullSchema);
-  const fullPartialValidator = getValidator(fullPartialSchema);
+  
+  // Create a clean method that removes properties not in the schema
+  const clean = <E>(entity: E): E => {
+    if (!entity) return entity;
+    
+    // Use the full schema to ensure all entity properties are included
+    return Value.Clean(fullSchema, entity) as E;
+  };
   
   return {
     schema,
     partialSchema,
     fullSchema,
-    fullPartialSchema,
     validator,
     partialValidator,
     fullValidator,
-    fullPartialValidator,
     isAuditable: !!options.isAuditable,
-    isMultiTenant: !!options.isMultiTenant
+    isMultiTenant: !!options.isMultiTenant,
+    clean
   };
 }
 

@@ -542,7 +542,11 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   }
 
   transformSingle(single: any): T {
-    return single;
+    // If no entity or no model spec, return as-is
+    if (!single || !this.modelSpec) return single;
+    
+    // Use the clean method from the model spec to remove properties not in the schema
+    return this.modelSpec.clean(single);
   }
 
   private stripSenderProvidedSystemProperties(doc: any) {

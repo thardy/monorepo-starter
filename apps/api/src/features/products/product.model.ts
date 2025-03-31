@@ -4,6 +4,7 @@ import { IAuditable } from '#root/src/common/models/auditable.interface';
 import { IEntity } from '#common/models/index';
 import { entityUtils } from '#common/utils/index';
 import { Money } from '#common/validation/index';
+import { TypeboxIsoDate } from '#common/validation/typebox-setup';
 
 // TypeScript interface - this contains the product properties (name, description, price, quantity) and the entity and auditable properties
 export interface IProduct extends IEntity, IAuditable {
@@ -30,10 +31,7 @@ export const ProductSchema = Type.Object({
     minimum: 0,
     title: 'Quantity'
   }),
-  someDate: Type.String({
-    title: 'Some Date',
-    format: 'date-time'
-  })
+  someDate: TypeboxIsoDate
 });
 
 export const ProductSpec = entityUtils.getModelSpec(ProductSchema, { isAuditable: true });

@@ -31,7 +31,7 @@ trim_trailing_whitespace = false
 max_line_length = off
 indent_style = space
 
-[{*.har,*.jsb2,*.jsb3,*.json,.babelrc,.eslintrc,.prettierrc,.stylelintrc,bowerrc,jest.config}]
+[{*.har,*.jsb2,*.jsb3,*.json,.babelrc,.eslintrc,.prettierrc,.stylelintrc,bowerrc}]
 max_line_length = off
 indent_style = space
 

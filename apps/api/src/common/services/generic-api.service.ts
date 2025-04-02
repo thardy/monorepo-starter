@@ -242,7 +242,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
         }
 
         // Call onBeforeCreate once with the array of entities
-        const preparedEntities = await this.onBeforeCreate(userContext, entities);
+        const preparedEntities = await this.onBeforeCreate(userContext, entities); // onBeforeCreate calls preparePayload, which calls prepareEntity
 
         // Insert all prepared entities
         const insertResult = await this.collection.insertMany(preparedEntities);
@@ -295,7 +295,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
     };
 
     // Call onBeforeUpdate once with the entity
-    const clone = await this.onBeforeUpdate(userContext, entity);
+    const clone = await this.onBeforeUpdate(userContext, entity); // onBeforeUpdate calls preparePayload, which calls prepareEntity
 
     // Merge audit properties back into the clone
     Object.assign(clone, auditProperties);
@@ -382,7 +382,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   }
 
   async update(userContext: IUserContext, queryObject: any, entity: Partial<T>): Promise<T[]> {
-    const clone = await this.onBeforeUpdate(userContext, entity);
+    const clone = await this.onBeforeUpdate(userContext, entity); // onBeforeUpdate calls preparePayload, which calls prepareEntity
 
     // Apply query preparation hook
     const query = this.prepareQuery(userContext, queryObject);
@@ -535,18 +535,16 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   transformList(list: any[]): T[] {
     if (!list) return [];
 
-    list.forEach((item) => {
-      this.transformSingle(item);
-    });
-    return list;
+    // Map each item through transformSingle instead of using forEach
+    return list.map(item => this.transformSingle(item));
   }
 
   transformSingle(single: any): T {
     // If no entity or no model spec, return as-is
     if (!single || !this.modelSpec) return single;
     
-    // Use the clean method from the model spec to remove properties not in the schema
-    return this.modelSpec.clean(single);
+    // Use the decode method from the model spec to remove properties not in the schema and make sure all properties are of the correct type
+    return this.modelSpec.decode(single);
   }
 
   private stripSenderProvidedSystemProperties(doc: any) {
@@ -611,13 +609,14 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
       }
     }
 
+    // Not anymore - this is now handled via decode. Every property that is an ObjectId must be defined as such in the Schema
     // Convert any foreign keys to ObjectIds
-    entityUtils.convertForeignKeysToObjectIds(preparedEntity);
+    //entityUtils.convertForeignKeysToObjectIds(preparedEntity);
 
-    // Use TypeBox to clean properties not in the schema if a model spec is provided
+    // Use TypeBox to decode properties and clean properties not in the schema if a model spec is provided
     if (this.modelSpec) {
       // Use type assertion to handle potential unknown return type
-      const cleanedEntity = Value.Clean(this.modelSpec.fullSchema, preparedEntity) as T | Partial<T>;
+      const cleanedEntity = this.modelSpec.decode(preparedEntity); // as T | Partial<T>
       
       return cleanedEntity;
     }

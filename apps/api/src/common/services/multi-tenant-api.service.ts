@@ -24,7 +24,7 @@ export class MultiTenantApiService<T extends IEntity> extends GenericApiService<
   /**
    * Override the query preparation hook to add tenant filtering
    */
-  protected override prepareQuery(userContext: IUserContext | undefined, query: any): any {
+  protected override prepareQuery(userContext: IUserContext, query: any): any {
     if (!userContext || !userContext.orgId) {
       throw new BadRequestError('A valid userContext was not provided to MultiTenantApiService.prepareQuery');
     }
@@ -40,7 +40,7 @@ export class MultiTenantApiService<T extends IEntity> extends GenericApiService<
   /**
    * Override the query options preparation hook to add tenant filtering
    */
-  protected override prepareQueryOptions(userContext: IUserContext | undefined, queryOptions: QueryOptions): QueryOptions {
+  protected override prepareQueryOptions(userContext: IUserContext, queryOptions: QueryOptions): QueryOptions {
     if (!userContext || !userContext.orgId) {
       throw new BadRequestError('A valid userContext was not provided to MultiTenantApiService.prepareQueryOptions');
     }
@@ -57,7 +57,7 @@ export class MultiTenantApiService<T extends IEntity> extends GenericApiService<
    * Override the individual entity preparation hook to add tenant ID
    * This will be called for both create and update operations
    */
-  protected override prepareEntity(userContext: IUserContext | undefined, entity: T, isCreate: boolean): T {
+  protected override prepareEntity(userContext: IUserContext, entity: T, isCreate: boolean): T | Partial<T> {
     if (!userContext || !userContext.orgId) {
       throw new BadRequestError('A valid userContext was not provided to MultiTenantApiService.prepareEntity');
     }

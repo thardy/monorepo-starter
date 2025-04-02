@@ -1,7 +1,7 @@
 import {Application, NextFunction, Request, Response} from 'express';
 import {DeleteResult, UpdateResult} from 'mongodb';
 import {IGenericApiService} from '../services/index.js';
-import {IEntity, IPagedResult} from '../models/index.js';
+import {IEntity, IPagedResult, IModelSpec} from '../models/index.js';
 
 import {isAuthenticated} from '../middleware/index.js';
 import {apiUtils} from '../utils/index.js';
@@ -11,12 +11,20 @@ export abstract class ApiController<T extends IEntity> {
   protected service: IGenericApiService<T>;
   protected slug: string;
 	protected apiResourceName: string;
+  protected modelSpec?: IModelSpec;
 
-  protected constructor(slug: string, app: Application, service: IGenericApiService<T>, resourceName: string = '') {
+  protected constructor(
+    slug: string, 
+    app: Application, 
+    service: IGenericApiService<T>, 
+    resourceName: string = '',
+    modelSpec?: IModelSpec
+  ) {
 	  this.slug = slug;
 	  this.app = app;
     this.service = service;
 		this.apiResourceName = resourceName;
+    this.modelSpec = modelSpec;
 
     this.mapRoutes(app);
   }
@@ -45,103 +53,53 @@ export abstract class ApiController<T extends IEntity> {
   }
 
   async getAll(req: Request, res: Response, next: NextFunction) {
-    try {
-      res.set('Content-Type', 'application/json');
-      const entities = await this.service.getAll(req.userContext!);
-	    return apiUtils.apiResponse<T[]>(res, 200, {data: entities});
-    }
-    catch (error) {
-      next(error);
-      // todo: figure out exactly what I want to return on error (if anything, does this return even get called? - debug it), and return just once at the end - then replicate in all functions.
-      return;
-    }
+    res.set('Content-Type', 'application/json');
+    const entities = await this.service.getAll(req.userContext!);
+    return apiUtils.apiResponse<T[]>(res, 200, {data: entities}, this.modelSpec);
   }
 
 	async get(req: Request, res: Response, next: NextFunction) {
-		try {
-			res.set('Content-Type', 'application/json');
-			const queryOptions = apiUtils.getQueryOptionsFromRequest(req)
+		res.set('Content-Type', 'application/json');
+		const queryOptions = apiUtils.getQueryOptionsFromRequest(req)
 
-			const pagedResult = await this.service.get(req.userContext!, queryOptions);
-			return apiUtils.apiResponse<IPagedResult<T>>(res, 200, { data: pagedResult });
-		}
-		catch (error) {
-			next(error);
-			return;
-		}
+		const pagedResult = await this.service.get(req.userContext!, queryOptions);
+		return apiUtils.apiResponse<IPagedResult<T>>(res, 200, { data: pagedResult }, this.modelSpec);
 	}
 
   async getById(req: Request, res: Response, next: NextFunction) {
     let id = req.params?.id;
-    try {
-      res.set('Content-Type', 'application/json');
-      const entity = await this.service.getById(req.userContext!, id);
-
-      return apiUtils.apiResponse<T>(res, 200, {data: entity});
-    }
-    catch (err: any) {
-      next(err);
-      return;
-    }
+    res.set('Content-Type', 'application/json');
+    const entity = await this.service.getById(req.userContext!, id);
+    return apiUtils.apiResponse<T>(res, 200, {data: entity}, this.modelSpec);
   }
 
 	async getCount(req: Request, res: Response, next: NextFunction) {
-		try {
-			res.set('Content-Type', 'application/json');
-			const count = await this.service.getCount(req.userContext!); // result is in the form { count: number }
-			return apiUtils.apiResponse<number>(res, 200, {data: count});
-		}
-		catch (error) {
-			next(error);
-			return;
-		}
+		res.set('Content-Type', 'application/json');
+		const count = await this.service.getCount(req.userContext!); // result is in the form { count: number }
+		return apiUtils.apiResponse<number>(res, 200, {data: count}, this.modelSpec);
 	}
 
   async create(req: Request, res: Response, next: NextFunction) {
-    try {
-      res.set('Content-Type', 'application/json');
-      const entity = await this.service.create(req.userContext!, req.body);
-      return apiUtils.apiResponse<T>(res, 201, {data: entity || undefined});
-    } 
-    catch (error) {
-      next(error);
-			return;
-    }
+    res.set('Content-Type', 'application/json');
+    const entity = await this.service.create(req.userContext!, req.body);
+    return apiUtils.apiResponse<T>(res, 201, {data: entity || undefined}, this.modelSpec);
   }
 
   async fullUpdateById(req: Request, res: Response, next: NextFunction) {
-    try {
-      res.set('Content-Type', 'application/json');
-      const updateResult = await this.service.fullUpdateById(req.userContext!, req.params.id, req.body);
-      return apiUtils.apiResponse<T>(res, 200, {data: updateResult});
-    } 
-    catch (error) {
-      next(error);
-			return;
-    }
+    res.set('Content-Type', 'application/json');
+    const updateResult = await this.service.fullUpdateById(req.userContext!, req.params.id, req.body);
+    return apiUtils.apiResponse<T>(res, 200, {data: updateResult}, this.modelSpec);
   }
 
 	async partialUpdateById(req: Request, res: Response, next: NextFunction) {
-		try {
-			res.set('Content-Type', 'application/json');
-			const updateResult = await this.service.partialUpdateById(req.userContext!, req.params.id, req.body);
-			return apiUtils.apiResponse<T>(res, 200, {data: updateResult});
-		} 
-    catch (error) {
-			next(error);
-			return;
-		}
+		res.set('Content-Type', 'application/json');
+		const updateResult = await this.service.partialUpdateById(req.userContext!, req.params.id, req.body);
+		return apiUtils.apiResponse<T>(res, 200, {data: updateResult}, this.modelSpec);
 	}
 
   async deleteById(req: Request, res: Response, next: NextFunction) {
-    try {
-      res.set('Content-Type', 'application/json');
-      const deleteResult = await this.service.deleteById(req.userContext!, req.params.id);
-      return apiUtils.apiResponse<DeleteResult>(res, 200, {data: deleteResult});
-    } 
-    catch (error) {
-      next(error);
-			return;
-    }
+    res.set('Content-Type', 'application/json');
+    const deleteResult = await this.service.deleteById(req.userContext!, req.params.id);
+    return apiUtils.apiResponse<DeleteResult>(res, 200, {data: deleteResult}, this.modelSpec);
   }
 }

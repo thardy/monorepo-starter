@@ -5,15 +5,32 @@ import {QueryOptions} from '../models/query-options.model.js';
 import {IPagedResult} from '../models/paged-result.interface.js';
 import {SortDirection} from '../models/types/index.js';
 import {IApiError} from '../models/api-error.interface.js';
+import {IModelSpec} from '../models/model-spec.interface.js';
 
 export interface IApiResponseOptions<T> {
 	messages?: string[];
 	errors?: IApiError[];
 	data?: T;
 }
-function apiResponse<T>(response: Response, status: number, options: IApiResponseOptions<T> = {}): Response {
+function apiResponse<T>(
+	response: Response, 
+	status: number, 
+	options: IApiResponseOptions<T> = {},
+	modelSpec?: IModelSpec
+): Response {
 	const success = status! >= 200 && status! < 300;
 	let apiResponse: IApiResponse<T>;
+
+	// Encode data if modelSpec is provided
+	if (modelSpec && options.data) {
+		if (Array.isArray(options.data)) {
+			// For arrays, encode each item
+			options.data = options.data.map(item => modelSpec.encode(item)) as T;
+		} else {
+			// For single entity
+			options.data = modelSpec.encode(options.data) as T;
+		}
+	}
 
 	if (success) {
 		apiResponse = {

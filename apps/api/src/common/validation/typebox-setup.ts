@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { StaticDecode, StaticEncode, TSchema, Type } from '@sinclair/typebox';
 import { ObjectId } from 'mongodb';
 import { DefaultErrorFunction, ErrorFunctionParameter, ValueErrorType, SetErrorFunction } from '@sinclair/typebox/errors'
 import { Kind } from '@sinclair/typebox'
@@ -7,6 +7,8 @@ import { IsDateTime } from './formats/date-time.js'
 import { IsDate } from './formats/date.js'
 // Import our extensions to ensure they're initialized
 import './typebox-extensions.js';
+import { Value } from '@sinclair/typebox/value';
+import { IsEmail } from './formats/email.js';
 
 
 // Custom objectId validator function
@@ -22,7 +24,7 @@ export const isValidObjectId = (value: string): boolean => {
 
 // Can be used to add custom validations when creating schemas
 // e.g., Type.String({ format: 'objectId' })
-Type.Unsafe({ kind: 'ObjectIdString', type: 'string', format: 'objectId' });
+// Type.Unsafe({ kind: 'ObjectIdString', type: 'string', format: 'objectId' });
 
 // Initialize function to be called on application startup
 export const initializeTypeBox = () => {
@@ -30,47 +32,14 @@ export const initializeTypeBox = () => {
   SetErrorFunction(customSetErrorFunction);
   
   // Register custom format validators
-  FormatRegistry.Set('objectId', isValidObjectId);
+  // FormatRegistry.Set('objectId', isValidObjectId); // currently just using actual ObjectId types instead of strings with format: 'objectId'
   FormatRegistry.Set('date-time', value => IsDateTime(value));
   FormatRegistry.Set('date', value => IsDate(value));
+  FormatRegistry.Set('email', value => IsEmail(value));
   
   console.log('TypeBox custom validations initialized');
 }; 
 
-// Date-time transform utility functions
-export const TypeboxIsoDate = Type.Transform(Type.String({ format: 'date-time' }))
-  .Decode(value => new Date(value))
-  .Encode(value => value.toISOString());
-
-// Date transform utility functions
-export const TypeboxDate = Type.Transform(Type.String({ format: 'date' }))
-  .Decode(value => {
-    const date = new Date(value);
-    // Set time to midnight UTC to ensure consistent date-only representation
-    date.setUTCHours(0, 0, 0, 0);
-    return date;
-  })
-  .Encode(value => {
-    // Format as YYYY-MM-DD
-    return value.toISOString().split('T')[0];
-  });
-
-// ObjectId transform utility functions
-export const TypeboxObjectId = Type.Transform(Type.String({ format: 'objectId' }))
-  .Decode(value => {
-    // When coming from string (like JSON), convert to ObjectId
-    // For TypeBox transformers, value should always be a string during Decode
-    return new ObjectId(value as string);
-  })
-  .Encode(value => {
-    // When serializing, convert ObjectId to string
-    // Handle the case where value might already be a string
-    if (typeof value === 'string') return value;
-    // Use toString() for ObjectId or any object with toString method
-    const stringValue = (value as any).toString();
-    console.log(`stringValue: ${stringValue}`); // todo: delete me
-    return stringValue;
-  });
 
 // Example usage of the IsoDateTransform transform functions...
 // Check it (validation)

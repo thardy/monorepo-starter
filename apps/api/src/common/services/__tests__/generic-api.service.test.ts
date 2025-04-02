@@ -8,6 +8,14 @@ import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { IdNotFoundError, DuplicateKeyError, BadRequestError } from '../../errors/index.js';
 import { entityUtils } from '../../utils/entity.utils.js';
 import moment from 'moment';
+import { TypeboxIsoDate, TypeboxObjectId } from '../../validation/typebox-extensions.js';
+import { initializeTypeBox } from '../../validation/typebox-setup.js';
+
+// Initialize TypeBox before running any tests
+beforeAll(() => {
+  // Initialize TypeBox with custom formats and validators
+  initializeTypeBox();
+});
 
 // Define a test entity interface
 interface TestEntity extends IEntity, IAuditable {
@@ -26,9 +34,6 @@ const TestEntitySchema = Type.Object({
   tags: Type.Optional(Type.Array(Type.String())),
   count: Type.Optional(Type.Number())
 });
-
-// Add partial schema for PATCH operations
-const PartialTestEntitySchema = Type.Partial(TestEntitySchema);
 
 // Create model spec object
 const testModelSpec = entityUtils.getModelSpec(TestEntitySchema, { isAuditable: true });
@@ -121,6 +126,7 @@ describe('[library] GenericApiService - Integration Tests', () => {
       
       // Act
       const createdEntity = await service.create(userContext, testEntity as TestEntity);
+
       const retrievedEntity = await service.getById(userContext, createdEntity!._id.toString());
       
       // Assert
@@ -789,6 +795,163 @@ describe('[library] GenericApiService - Integration Tests', () => {
         expect(updatedEntity._created).toEqual(createdEntity._created);
         expect(updatedEntity._createdBy).toEqual(createdEntity._createdBy);
       }
+    });
+  });
+  
+  describe('Type Conversion', () => {
+    it('should convert string IDs to ObjectIds based on schema definition', async () => {
+      // Arrange
+      const userContext = createUserContext();
+      
+      // Create a schema with refId defined as ObjectId type
+      const ObjectIdSchema = Type.Object({
+        name: Type.String({ minLength: 1 }),
+        // Use TypeboxObjectId for proper transformation
+        refId: TypeboxObjectId({ title: 'Reference ID' })
+      });
+      
+      const objectIdModelSpec = entityUtils.getModelSpec(ObjectIdSchema, { isAuditable: true });
+      
+      // Create a service with this schema
+      const objectIdService = new GenericApiService<any>(
+        db,
+        'objectIdToStringTest',
+        'objectIdEntity',
+        objectIdModelSpec
+      );
+      
+      // Create an entity with a string ID (simulating JSON from API)
+      const stringIdEntity = {
+        name: 'Entity with string ID reference',
+        refId: new ObjectId().toString() // String ID from client
+      };
+      
+      // Act - Create the entity through the service
+      const createdEntity = await objectIdService.create(userContext, stringIdEntity);
+      
+      // Retrieve the entity
+      const retrievedEntity = await objectIdService.getById(userContext, createdEntity!._id.toString());
+      
+      // Assert - the refId should be converted to an ObjectId by the schema
+      expect(retrievedEntity).toBeDefined();
+      expect(retrievedEntity.refId).toBeDefined();
+      expect(retrievedEntity.refId instanceof ObjectId).toBe(true);
+      expect(retrievedEntity.refId.toString()).toBe(stringIdEntity.refId);
+    });
+    
+    it('should convert ISO date strings to Date objects based on schema definition', async () => {
+      // Arrange
+      const userContext = createUserContext();
+      
+      // Create a test date and its ISO string representation
+      const testDate = new Date();
+      const isoDateString = testDate.toISOString();
+      
+      // Create a schema with eventDate defined as Date type
+      const DateSchema = Type.Object({
+        name: Type.String({ minLength: 1 }),
+        eventDate: TypeboxIsoDate({ title: 'Event Date' })
+      });
+      
+      const dateModelSpec = entityUtils.getModelSpec(DateSchema, { isAuditable: true });
+      
+      // Create a service with this schema
+      const dateService = new GenericApiService<any>(
+        db,
+        'dateEntities',
+        'dateEntity',
+        dateModelSpec
+      );
+      
+      // Create entity with a date as string (simulating JSON from API)
+      const entityWithDateString = {
+        name: 'Entity with date string',
+        eventDate: isoDateString // ISO date string from API
+      };
+      
+      // Act - Create the entity through the service
+      const createdEntity = await dateService.create(userContext, entityWithDateString);
+      
+      // Retrieve the entity
+      const retrievedEntity = await dateService.getById(userContext, createdEntity!._id.toString());
+      
+      // Assert - the eventDate should be converted to a Date object by the schema
+      expect(retrievedEntity).toBeDefined();
+      expect(retrievedEntity.eventDate).toBeDefined();
+      expect(retrievedEntity.eventDate instanceof Date).toBe(true);
+      expect(retrievedEntity.eventDate.toISOString()).toBe(isoDateString);
+    });
+    
+    it('should handle nested objects with ObjectIds and Dates based on schema definition', async () => {
+      // Arrange
+      const userContext = createUserContext();
+      const testDate = new Date();
+      const refId = new ObjectId();
+      
+      // Create a schema for a complex entity with nested objects
+      const ComplexSchema = Type.Object({
+        name: Type.String(),
+        nested: Type.Object({
+          refId: TypeboxObjectId({ title: 'Reference ID' }), // Using TypeboxObjectId for proper transformation
+          timestamp: TypeboxIsoDate({ title: 'Timestamp' }), // Using TypeboxIsoDate for proper transformation
+          deeplyNested: Type.Object({
+            anotherRefId: TypeboxObjectId({ title: 'Another Reference ID' })
+          })
+        }),
+        items: Type.Array(
+          Type.Object({
+            itemRefId: TypeboxObjectId({ title: 'Item Reference ID' }),
+            created: TypeboxIsoDate({ title: 'Created Date' })
+          })
+        )
+      });
+      
+      const complexModelSpec = entityUtils.getModelSpec(ComplexSchema);
+      
+      // Create a service with this schema
+      const complexService = new GenericApiService<any>(
+        db,
+        'complexEntities',
+        'complexEntity',
+        complexModelSpec
+      );
+      
+      // Create an entity with nested objects containing string IDs and ISO date strings (simulating JSON from API)
+      const complexJsonEntity = {
+        name: 'Complex Entity',
+        nested: {
+          refId: refId.toString(), // String ID from client
+          timestamp: testDate.toISOString(), // ISO date string from client
+          deeplyNested: {
+            anotherRefId: refId.toString() // String ID from client
+          }
+        },
+        items: [
+          { itemRefId: refId.toString(), created: testDate.toISOString() },
+          { itemRefId: new ObjectId().toString(), created: new Date().toISOString() }
+        ]
+      };
+      
+      // Act - Create the entity through the service
+      const createdEntity = await complexService.create(userContext, complexJsonEntity);
+      
+      // Retrieve the entity
+      const retrievedEntity = await complexService.getById(userContext, createdEntity!._id.toString());
+      
+      // Assert - check that all string IDs and ISO date strings were converted to their proper types
+      expect(retrievedEntity).toBeDefined();
+      expect(retrievedEntity.nested.refId instanceof ObjectId).toBe(true);
+      expect(retrievedEntity.nested.timestamp instanceof Date).toBe(true);
+      expect(retrievedEntity.nested.deeplyNested.anotherRefId instanceof ObjectId).toBe(true);
+      expect(retrievedEntity.items[0].itemRefId instanceof ObjectId).toBe(true);
+      expect(retrievedEntity.items[0].created instanceof Date).toBe(true);
+      expect(retrievedEntity.items[1].itemRefId instanceof ObjectId).toBe(true);
+      expect(retrievedEntity.items[1].created instanceof Date).toBe(true);
+      
+      // Verify the values match the original input
+      expect(retrievedEntity.nested.refId.toString()).toBe(refId.toString());
+      expect(retrievedEntity.nested.timestamp.toISOString()).toBe(testDate.toISOString());
+      expect(retrievedEntity.nested.deeplyNested.anotherRefId.toString()).toBe(refId.toString());
     });
   });
 }); 

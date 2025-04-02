@@ -1,5 +1,6 @@
 import { Type } from '@sinclair/typebox';
-import { TypeboxIsoDate } from '../validation/typebox-setup.js';
+import { TypeboxIsoDate } from '../validation/index.js';
+
 export interface IAuditable {
   _created: Date;
   _createdBy: string;

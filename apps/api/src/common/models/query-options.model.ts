@@ -1,5 +1,11 @@
 import {SortDirection} from './types/sort-direction.type.js';
 
+/**
+ * Allows reading the filters object in the query options.
+ * 
+ * @example in query string:
+ * filters[name][contains]=burk
+ */
 export type Filter = {
 	eq?: string | number | boolean | Date;
 	ne?: string | number | boolean | Date;

@@ -3,8 +3,8 @@ import { Type, Static } from '@sinclair/typebox';
 import { IAuditable } from '#root/src/common/models/auditable.interface';
 import { IEntity } from '#common/models/index';
 import { entityUtils } from '#common/utils/index';
-import { Money } from '#common/validation/index';
-import { TypeboxIsoDate } from '#common/validation/typebox-setup';
+import { TypeboxMoney } from '#common/validation/index';
+import { TypeboxIsoDate } from '#common/validation/index';
 
 // TypeScript interface - this contains the product properties (name, description, price, quantity) and the entity and auditable properties
 export interface IProduct extends IEntity, IAuditable {
@@ -23,7 +23,7 @@ export const ProductSchema = Type.Object({
   description: Type.Optional(Type.String({
     title: 'Description'
   })),
-  price: Money({
+  price: TypeboxMoney({
     minimum: 0,
     title: 'Price'
   }),

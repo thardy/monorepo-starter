@@ -6,7 +6,7 @@ import { ObjectId } from 'mongodb';
 import { Value } from '@sinclair/typebox/value';
 
 describe('entityUtils', () => {
-  describe('clean method', () => {
+  describe('encode', () => {
     // Define a test schema
     const TestSchema = Type.Object({
       name: Type.String(),
@@ -15,7 +15,7 @@ describe('entityUtils', () => {
       tags: Type.Optional(Type.Array(Type.String()))
     });
     
-    // Create a model spec with the clean method
+    // Create a model spec with the encode method
     const testSpec = entityUtils.getModelSpec(TestSchema, { isAuditable: true });
     
     it('should remove properties not defined in the schema', () => {
@@ -30,21 +30,20 @@ describe('entityUtils', () => {
       };
       
       // Act
-      const cleanedEntity = testSpec.clean(entityWithExtraProps);
+      const encodedEntity = testSpec.encode(entityWithExtraProps);
       
       // Assert
-      expect(cleanedEntity).toBeDefined();
-      expect(cleanedEntity.name).toBe('Test Entity');
-      expect(cleanedEntity.age).toBe(30);
+      expect(encodedEntity).toBeDefined();
+      expect(encodedEntity.name).toBe('Test Entity');
+      expect(encodedEntity.age).toBe(30);
       
       // Extra properties should be removed
-      expect((cleanedEntity as any).extraProperty).toBeUndefined();
-      expect((cleanedEntity as any).anotherExtraProperty).toBeUndefined();
-      expect((cleanedEntity as any).nestedExtraProperty).toBeUndefined();
+      expect((encodedEntity as any).extraProperty).toBeUndefined();
+      expect((encodedEntity as any).anotherExtraProperty).toBeUndefined();
+      expect((encodedEntity as any).nestedExtraProperty).toBeUndefined();
     });
     
-    // Debug test to see what happens to ObjectId instances
-    it('should preserve ObjectId instances when cleaning', () => {
+    it('should convert ObjectId instances to strings', () => {
       // Create an entity with an ObjectId
       const originalId = new ObjectId();
       const entity = { 
@@ -52,17 +51,13 @@ describe('entityUtils', () => {
         name: 'Test with ObjectId' 
       };
       
-      // Clean the entity using the model spec
-      const cleanedEntity = testSpec.clean(entity);
-      console.log(`cleanedEntity: ${JSON.stringify(cleanedEntity)}`); // todo: delete me
+      // Encode the entity using the model spec
+      const encodedEntity = testSpec.encode(entity);
       
-      // Assert that the _id field still contains an ObjectId instance
-      expect(cleanedEntity._id).toBeDefined();
-      expect(cleanedEntity._id instanceof ObjectId).toBe(true);
-      expect(cleanedEntity._id).toBe(originalId); // Same instance
-      
-      // Make sure we can still use ObjectId methods
-      expect(typeof cleanedEntity._id.toString()).toBe('string');
+      // Assert that the _id field is now a string representation of the ObjectId
+      expect(encodedEntity._id).toBeDefined();
+      expect(typeof encodedEntity._id).toBe('string');
+      expect(encodedEntity._id).toBe(originalId.toString());
     });
     
     it('should preserve system properties from the EntitySchema', () => {
@@ -76,18 +71,19 @@ describe('entityUtils', () => {
       };
       
       // Act
-      const cleanedEntity = testSpec.clean(entityWithSystemProps);
+      const encodedEntity = testSpec.encode(entityWithSystemProps);
       
       // Assert
-      expect(cleanedEntity).toBeDefined();
-      expect(cleanedEntity.name).toBe('System Props Test');
-      expect(cleanedEntity._id).toBe('507f1f77bcf86cd799439011');
+      expect(encodedEntity).toBeDefined();
+      expect(encodedEntity.name).toBe('System Props Test');
+      expect(encodedEntity._id).toBeDefined();
+      expect(typeof encodedEntity._id).toBe('string');
       
       // Extra property should be removed
-      expect((cleanedEntity as any).notInSchema).toBeUndefined();
+      expect((encodedEntity as any).notInSchema).toBeUndefined();
     });
     
-    it('should preserve audit properties from AuditableSchema', () => {
+    it('should convert Date objects to strings', () => {
       // Arrange
       const now = new Date();
       const entityWithAuditProps = {
@@ -102,18 +98,20 @@ describe('entityUtils', () => {
       };
       
       // Act
-      const cleanedEntity = testSpec.clean(entityWithAuditProps);
+      const encodedEntity = testSpec.encode(entityWithAuditProps);
       
       // Assert
-      expect(cleanedEntity).toBeDefined();
-      expect(cleanedEntity.name).toBe('Audit Props Test');
-      expect(cleanedEntity._created).toEqual(now);
-      expect(cleanedEntity._createdBy).toBe('test-user');
-      expect(cleanedEntity._updated).toEqual(now);
-      expect(cleanedEntity._updatedBy).toBe('test-user');
+      expect(encodedEntity).toBeDefined();
+      expect(encodedEntity.name).toBe('Audit Props Test');
+      expect(typeof encodedEntity._created).toBe('string');
+      expect(encodedEntity._created).toBe(now.toISOString());
+      expect(encodedEntity._createdBy).toBe('test-user');
+      expect(typeof encodedEntity._updated).toBe('string');
+      expect(encodedEntity._updated).toBe(now.toISOString());
+      expect(encodedEntity._updatedBy).toBe('test-user');
       
       // Extra property should be removed
-      expect((cleanedEntity as any).extraProp).toBeUndefined();
+      expect((encodedEntity as any).extraProp).toBeUndefined();
     });
     
     it('should handle arrays and nested objects correctly', () => {
@@ -131,32 +129,126 @@ describe('entityUtils', () => {
       };
       
       // Act
-      const cleanedEntity = testSpec.clean(entityWithArrays);
+      const encodedEntity = testSpec.encode(entityWithArrays);
       
       // Assert
-      expect(cleanedEntity).toBeDefined();
-      expect(cleanedEntity.name).toBe('Array Test');
-      expect(cleanedEntity.tags).toEqual(['tag1', 'tag2', 'tag3']);
+      expect(encodedEntity).toBeDefined();
+      expect(encodedEntity.name).toBe('Array Test');
+      expect(encodedEntity.tags).toEqual(['tag1', 'tag2', 'tag3']);
       
       // Extra properties should be removed
-      expect((cleanedEntity as any).complexArray).toBeUndefined();
-      expect((cleanedEntity as any).extraArray).toBeUndefined();
+      expect((encodedEntity as any).complexArray).toBeUndefined();
+      expect((encodedEntity as any).extraArray).toBeUndefined();
     });
     
     it('should handle null values gracefully', () => {
       // Act
-      const cleanedNull = testSpec.clean(null);
+      const encodedNull = testSpec.encode(null);
       
       // Assert
-      expect(cleanedNull).toBeNull();
+      expect(encodedNull).toBeNull();
     });
     
     it('should handle undefined values gracefully', () => {
       // Act
-      const cleanedUndefined = testSpec.clean(undefined);
+      const encodedUndefined = testSpec.encode(undefined);
       
       // Assert
-      expect(cleanedUndefined).toBeUndefined();
+      expect(encodedUndefined).toBeUndefined();
+    });
+  });
+  
+  describe('decode', () => {
+    // Define a test schema
+    const TestSchema = Type.Object({
+      name: Type.String(),
+      age: Type.Optional(Type.Number()),
+      email: Type.Optional(Type.String({ format: 'email' })),
+      tags: Type.Optional(Type.Array(Type.String()))
+    });
+    
+    // Create a model spec with the decode method
+    const testSpec = entityUtils.getModelSpec(TestSchema, { isAuditable: true });
+    
+    it('should convert string IDs to ObjectId instances', () => {
+      // Create an entity with a string ID
+      const idString = '507f1f77bcf86cd799439011';
+      const entity = { 
+        _id: idString,
+        name: 'Test with string ID' 
+      };
+      
+      // Decode the entity using the model spec
+      const decodedEntity = testSpec.decode(entity);
+      
+      // Assert that the _id field is now an ObjectId
+      expect(decodedEntity._id).toBeDefined();
+      expect((decodedEntity._id as any) instanceof ObjectId).toBe(true);
+      expect((decodedEntity._id as any).toString()).toBe(idString);
+    });
+    
+    it('should convert string dates to Date objects', () => {
+      // Arrange
+      const nowIsoString = new Date().toISOString();
+      const entityWithAuditProps = {
+        name: 'Audit Props Test',
+        _created: nowIsoString,
+        _createdBy: 'test-user',
+        _updated: nowIsoString,
+        _updatedBy: 'test-user'
+      };
+      
+      // Act
+      const decodedEntity = testSpec.decode(entityWithAuditProps);
+      
+      // Assert
+      expect(decodedEntity).toBeDefined();
+      expect(decodedEntity.name).toBe('Audit Props Test');
+      expect((decodedEntity._created as any) instanceof Date).toBe(true);
+      expect((decodedEntity._created as any).toISOString()).toBe(nowIsoString);
+      expect(decodedEntity._createdBy).toBe('test-user');
+      expect((decodedEntity._updated as any) instanceof Date).toBe(true);
+      expect((decodedEntity._updated as any).toISOString()).toBe(nowIsoString);
+      expect(decodedEntity._updatedBy).toBe('test-user');
+    });
+    
+    it('should remove properties not defined in the schema', () => {
+      // Arrange
+      const entityWithExtraProps = {
+        name: 'Test Entity',
+        age: 30,
+        // Properties not in the schema
+        extraProperty: 'This should be removed',
+        anotherExtraProperty: 42
+      };
+      
+      // Act
+      const decodedEntity = testSpec.decode(entityWithExtraProps);
+      
+      // Assert
+      expect(decodedEntity).toBeDefined();
+      expect(decodedEntity.name).toBe('Test Entity');
+      expect(decodedEntity.age).toBe(30);
+      
+      // Extra properties should be removed
+      expect((decodedEntity as any).extraProperty).toBeUndefined();
+      expect((decodedEntity as any).anotherExtraProperty).toBeUndefined();
+    });
+    
+    it('should handle null values gracefully', () => {
+      // Act
+      const decodedNull = testSpec.decode(null);
+      
+      // Assert
+      expect(decodedNull).toBeNull();
+    });
+    
+    it('should handle undefined values gracefully', () => {
+      // Act
+      const decodedUndefined = testSpec.decode(undefined);
+      
+      // Assert
+      expect(decodedUndefined).toBeUndefined();
     });
   });
 }); 

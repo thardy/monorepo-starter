@@ -15,7 +15,14 @@ interface TestEntity extends IEntity {
 
 // Helper function to create a mock user context
 const createUserContext = (orgId: string): IUserContext => ({
-  user: { _id: new ObjectId(), email: 'test@example.com' },
+  user: { 
+    _id: new ObjectId(), 
+    email: 'test@example.com',
+    _created: new Date(),
+    _createdBy: 'system',
+    _updated: new Date(),
+    _updatedBy: 'system'
+  },
   orgId,
 });
 
@@ -243,7 +250,14 @@ describe('[library] MultiTenantApiService', () => {
     it('should throw BadRequestError if userContext has no orgId', () => {
       // Arrange
       const userContextWithoutOrg: IUserContext = {
-        user: { _id: new ObjectId(), email: 'test@example.com' }
+        user: { 
+          _id: new ObjectId(), 
+          email: 'test@example.com',
+          _created: new Date(),
+          _createdBy: 'system',
+          _updated: new Date(),
+          _updatedBy: 'system'
+        }
       };
       const entity: TestEntity = { ...testEntity };
       

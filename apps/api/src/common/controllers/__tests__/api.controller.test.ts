@@ -48,7 +48,7 @@ describe('[library] ApiController - Integration Tests', () => {
   let controller: TestItemController;
   let authToken: string;
   let userId: string;
-  let testAgent: supertest.SuperTest<supertest.Test>;
+  let testAgent: any; // Using any to bypass strict type checking
   const testOrgId = '67e8e19b149f740323af93d7';
 
   beforeAll(async () => {
@@ -71,7 +71,7 @@ describe('[library] ApiController - Integration Tests', () => {
         try {
           const decoded = jsonwebtoken.verify(token, 'test-secret') as any;
           
-          // Set proper userContext that matches your application structure
+          // Set userContext
           req.userContext = {
             user: {
               _id: new ObjectId(userId),
@@ -88,7 +88,7 @@ describe('[library] ApiController - Integration Tests', () => {
           return res.status(401).json({ message: 'Invalid token' });
         }
       }
-      next();
+      return next();
     });
     
     // Create service and controller

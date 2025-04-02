@@ -50,5 +50,28 @@ export interface IModelSpec<T extends TSchema = TSchema> {
    * @param entity The entity to clean
    * @returns A cleaned entity with only schema-defined properties
    */
+  // clean: <E>(entity: E) => E;
+
+  /**
+   * Encode method that converts values to the correct type
+   * @param type The TypeBox type to encode
+   * @param value The value to encode
+   * @returns The encoded value
+   */
+  encode: <E>(entity: E) => E;
+
+  /**
+   * Decode method that converts values to the correct type
+   * @param type The TypeBox type to decode
+   * @param value The value to decode
+   * @returns The decoded value
+   */
+  decode: <E>(entity: E) => E;
+
+  /**
+   * Clean method that removes properties not defined in the schema
+   * @param entity The entity to clean
+   * @returns A cleaned entity with only schema-defined properties
+   */
   clean: <E>(entity: E) => E;
 } 

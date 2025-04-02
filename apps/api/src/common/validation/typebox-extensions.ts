@@ -1,7 +1,74 @@
-import { Type, Kind, TSchema, NumberOptions, ValueGuard } from '@sinclair/typebox';
+import { Type, Kind, TSchema, NumberOptions, ValueGuard, StaticEncode, StaticDecode } from '@sinclair/typebox';
 import { TypeRegistry } from '@sinclair/typebox';
 import { Decimal as _Decimal } from 'decimal.js';
 import { Value } from '@sinclair/typebox/value';
+import { ObjectId } from 'mongodb';
+
+// Date-time transform utility functions
+export function TypeboxIsoDate(options: object = {}) {
+  return Type.Transform(Type.String({ format: 'date-time', ...options }))
+    .Decode(value => new Date(value))
+    .Encode(value => value.toISOString());
+}
+
+// Date transform utility functions
+export function TypeboxDate(options: object = {}) {
+  return Type.Transform(Type.String({ format: 'date', ...options }))
+    .Decode(value => {
+      const date = new Date(value);
+      // Set time to midnight UTC to ensure consistent date-only representation
+      date.setUTCHours(0, 0, 0, 0);
+      return date;
+    })
+    .Encode(value => {
+      // Format as YYYY-MM-DD
+      return value.toISOString().split('T')[0];
+    });
+}
+
+// ObjectId transform utility functions
+export function TypeboxObjectId(options: object = {}) {
+  return Type.Transform(Type.String({ pattern: '^[0-9a-fA-F]{24}$', ...options }))
+    //.Decode(value => new ObjectId(value))
+    .Decode((value: any) => {
+      if (value === null || value === undefined) {
+        return value;
+      }
+      
+      // Case 1: Already an ObjectId instance - return as is
+      if (typeof value === 'object' && value?.toHexString && typeof value.toHexString === 'function') {
+        return value as ObjectId;
+      }
+      
+      // Case 2: Object with buffer property (raw object after Clean is done with it)
+      if (typeof value === 'object' && value !== null && value.buffer) {
+        return new ObjectId(value.buffer);
+      }
+      
+      // Case 3: String - convert to ObjectId
+      if (typeof value === 'string') {
+        return new ObjectId(value);
+      }
+      
+      // Case 4: Try toString() as a fallback (with error handling)
+      try {
+        if (value !== null && typeof value === 'object' && value.toString && typeof value.toString === 'function') {
+          const strValue = value.toString();
+          if (typeof strValue === 'string' && ObjectId.isValid(strValue)) {
+            return new ObjectId(strValue);
+          }
+        }
+      } catch (err) {
+        console.warn(`Failed to convert value to ObjectId:`, value);
+      }
+      
+      // Return original if nothing worked
+      return value;
+    })
+    .Encode((value: any) => value instanceof ObjectId ? value.toString() : 
+        typeof value === 'string' ? value :
+        value?.toString?.() || String(value));
+}
 
 // -----------------------------------------------------------------
 // Type: Decimal - A custom type for handling decimal numbers with precise validation
@@ -18,7 +85,7 @@ export interface TDecimal extends TSchema, NumberOptions {
  * @param options Additional options for the number schema (title, description, etc.)
  * @returns A TypeBox schema configured for decimal values
  */
-export function Decimal(options: NumberOptions = {}): TDecimal {
+export function TypeboxDecimal(options: NumberOptions = {}): TDecimal {
   return { ...options, [Kind]: 'Decimal', type: 'number' } as TDecimal;
 }
 
@@ -44,8 +111,8 @@ TypeRegistry.Set<TDecimal>('Decimal', (schema: TDecimal, value: unknown) => {
  * @param options Additional options for the number schema
  * @returns A TypeBox schema for monetary values
  */
-export function Money(options: NumberOptions = {}): TDecimal {
-  return Decimal({
+export function TypeboxMoney(options: NumberOptions = {}): TDecimal {
+  return TypeboxDecimal({
     multipleOf: 0.01,
     ...options
   });
@@ -56,8 +123,8 @@ export function Money(options: NumberOptions = {}): TDecimal {
  * @param options Additional options for the number schema
  * @returns A TypeBox schema for percentage values
  */
-export function Percentage(options: NumberOptions = {}): TDecimal {
-  return Decimal({
+export function TypeboxPercentage(options: NumberOptions = {}): TDecimal {
+  return TypeboxDecimal({
     minimum: 0,
     maximum: 100,
     ...options
@@ -71,7 +138,7 @@ export function Percentage(options: NumberOptions = {}): TDecimal {
 // todo: move this into an actual test file following our testing patterns - in a __tests__ folder using vitest, etc, etc
 export function testMoneyType(): void {
   const schema = Type.Object({
-    price: Money({ minimum: 0 })
+    price: TypeboxMoney({ minimum: 0 })
   });
 
   // Test valid case

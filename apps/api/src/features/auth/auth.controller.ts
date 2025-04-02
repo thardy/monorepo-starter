@@ -1,10 +1,10 @@
 import {Application, Request, Response, NextFunction} from 'express';
-import {Db, UpdateResult} from 'mongodb';
+import {Db, ObjectId, UpdateResult} from 'mongodb';
 
 import {BadRequestError, NotFoundError, UnauthenticatedError} from '#common/errors/index';
 import {isAuthenticated} from '#common/middleware/is-authenticated';
 import {passwordUtils, apiUtils} from '#common/utils/index';
-import {LoginResponse, User, TokenResponse, IUserContext} from '#common/models/index';
+import {LoginResponse, IUser, TokenResponse, IUserContext} from '#common/models/index';
 
 import {AuthService} from './auth.service.js';
 
@@ -46,9 +46,11 @@ export class AuthController {
     }
 
 	  // Now that we have compared the password, let's clean the user, so we don't send the password anywhere
-	  User.cleanUser(user);
+    //cleanUser(user); // todo: consider finding a Typebox way to make sure this happens (encode?) apiUtils.apiResponse!!!! and a PublicUser schema!!!
 
+    // todo: find a way to make auth multi-tenant aware. Be able to flip it on and off without hardcoding one way or the other
     const userContext = { user: user, orgId: user.orgId };
+    //const userContext = { user: user };
 		const deviceId = this.authService.getAndSetDeviceIdCookie(req, res);
 		//console.log(`In authController. deviceId: ${deviceId}`); // todo: delete me
     const loginResponse = await this.authService.logUserIn(userContext, deviceId);
@@ -65,21 +67,11 @@ export class AuthController {
     console.log(`userContext: ${JSON.stringify(userContext)}`); // todo: delete me
     const body = req.body;
 
-    // In test environment, we allow registration without userContext if orgId is provided in the body
-    // This helps with testing since we have our multi-tenant architecture
-    let contextToUse = userContext;
-    if (!contextToUse && process.env.NODE_ENV === 'test' && body.orgId) {
-      contextToUse = {
-        user: { id: 'test-user-id' }, // Fake user ID for test
-        orgId: body.orgId
-      };
-    }
-
     // we're not handling errors here anymore because createUser throws errors and middleware handles them
-    const user = await this.authService.createUser(contextToUse, body);
+    const user = await this.authService.createUser(userContext!, body);
 
     //return res.status(201).json(apiResponse);
-    return apiUtils.apiResponse<User>(res, 201, {data: user});
+    return apiUtils.apiResponse<IUser>(res, 201, {data: user});
   }
 
   async requestTokenUsingRefreshToken(req: Request, res: Response, next: NextFunction) {

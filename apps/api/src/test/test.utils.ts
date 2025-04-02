@@ -102,10 +102,10 @@ async function createTestUsers() {
     testUtils.testOrgId = testOrgId;
 
     if (insertResults[0]?.insertedIds) {
-      _.forEach(testUtils.existingUsers, (item: any) => {
-        entityUtils.useFriendlyId(item);
-        entityUtils.removeMongoId(item);
-      });
+      // _.forEach(testUtils.existingUsers, (item: any) => {
+      //   entityUtils.useFriendlyId(item);
+      //   entityUtils.removeMongoId(item);
+      // });
       testUtils.testUserId = testUtils.existingUsers[0]?.id;
       testUtils.updateUserId = testUtils.existingUsers[1]?.id;
     }
@@ -155,10 +155,10 @@ async function createTestClients() {
 
 		// insertMany response looks like this {"acknowledged":true,"insertedCount":2,"insertedIds":{"0":"66fc75b3dcd36da71ee749e7","1":"66fc75b3dcd36da71ee749e8"}}
 		if (insertResults?.insertedCount > 0) {
-			_.forEach(testUtils.existingClients, (item: any) => {
-				entityUtils.useFriendlyId(item);
-				entityUtils.removeMongoId(item);
-			});
+			// _.forEach(testUtils.existingClients, (item: any) => {
+			// 	entityUtils.useFriendlyId(item);
+			// 	entityUtils.removeMongoId(item);
+			// });
 			testClient1Id = testUtils.existingClients[0]?.id;
 			testClient2Id = testUtils.existingClients[1]?.id;
 		}

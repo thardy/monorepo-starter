@@ -1,6 +1,6 @@
 import { BadRequestError, ServerError, ValidationError } from '../errors/index.js';
 import { ObjectId } from 'mongodb';
-import { TSchema, Type } from '@sinclair/typebox';
+import { TSchema, Type, StaticEncode, StaticDecode } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { ValueError, ValueErrorType } from '@sinclair/typebox/errors';
 import { EntitySchema, AuditableSchema, MultiTenantEntitySchema, IAuditable, IModelSpec } from '../models/index.js';
@@ -56,6 +56,26 @@ function getModelSpec<T extends TSchema>(
   const partialValidator = getValidator(partialSchema);
   const fullValidator = getValidator(fullSchema);
   
+  // encode receives an entity and converts all properties into their json types (like going from date to iso string)
+  const encode = <E>(entity: E): E => {
+    if (entity === null || entity === undefined) {
+      return entity;
+    }
+    // just calling encode here because I haven't seen a scenario yet where we want to call clean, etc - we already called clean when 
+    //  we pulled from the db (we called decode at that time, in transformSingle)
+    return Value.Parse(['Encode'], fullSchema, entity) as never;
+  }
+
+  // decode receives json and converts all properties into their correct types (like going from iso string to date)
+  const decode = <E>(entity: E): E => {
+    if (entity === null || entity === undefined) {
+      return entity;
+    }
+    
+    // We are not using the Assert step here because we are not using these for validation - we use the validators for that
+    return Value.Parse(['Clean', 'Default', 'Convert', 'Decode'], fullSchema, entity) as never;
+  }
+  
   // Create a clean method that removes properties not in the schema
   const clean = <E>(entity: E): E => {
     if (!entity) return entity;
@@ -73,6 +93,8 @@ function getModelSpec<T extends TSchema>(
     fullValidator,
     isAuditable: !!options.isAuditable,
     isMultiTenant: !!options.isMultiTenant,
+    encode,
+    decode,
     clean
   };
 }

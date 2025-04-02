@@ -5,13 +5,13 @@ import crypto from 'crypto';
 
 import {BadRequestError, DuplicateKeyError} from '#common/errors/index';
 import {JwtService, EmailService, GenericApiService} from '#common/services/index';
-import {IUserContext, IUser, ROLES, User, LoginResponse, TokenResponse} from '#common/models/index';
+import {IUserContext, IUser, LoginResponse, TokenResponse} from '#common/models/index';
 import {conversionUtils, entityUtils, passwordUtils} from '#common/utils/index';
 
 import config from '#server/config/config';
 import {PasswordResetTokenService} from '#features/auth/password-reset-token.service';
 
-export class AuthService extends GenericApiService<User> {
+export class AuthService extends GenericApiService<IUser> {
 	private refreshTokensCollection: Collection;
 	private passwordResetTokenService: PasswordResetTokenService;
 	private emailService: EmailService;
@@ -28,7 +28,7 @@ export class AuthService extends GenericApiService<User> {
 		const payload = userContext;
 		const accessToken = this.generateJwt(payload);
 		// upon login, we want to create a new refreshToken with a full expiresOn expiration
-		const refreshTokenObject = await this.createNewRefreshToken(userContext.user.id!, deviceId);
+		const refreshTokenObject = await this.createNewRefreshToken(userContext.user._id!.toString(), deviceId);
 		const accessTokenExpiresOn = this.getExpiresOnFromSeconds(config.auth.jwtExpirationInSeconds);
 
 		let loginResponse = null;
@@ -68,7 +68,7 @@ export class AuthService extends GenericApiService<User> {
 			});
 	}
 
-	async createUser(userContext: IUserContext | undefined, user: User): Promise<User> {
+	async createUser(userContext: IUserContext, user: IUser): Promise<IUser> {
 		// You currently don't have to be logged-in to create a user - we'll need to vette exactly what you do need based on the scenario.
 		// todo: validate that the user.orgId exists - think through the whole user creation process
 		//  I think a user either has to be created by someone with the authorization to do so, or they need to be
@@ -85,10 +85,10 @@ export class AuthService extends GenericApiService<User> {
 		user.password = hash;
 
 		/**
-		 * Need to set default role if new user created without a role.
+		 * Need to set default roles if new user created without a role.
 		 */
-		if (!user.role) {
-			user.role = "user";
+		if (!user.roles) {
+			user.roles = ["user"];
 		}
 
 		await this.onBeforeCreate(userContext, user);
@@ -140,7 +140,7 @@ export class AuthService extends GenericApiService<User> {
 		const validationResult = User.passwordValidationSchema.validate(body.password, {abortEarly: false});
 		entityUtils.handleValidationResult(validationResult, 'AuthService.changePassword');
 
-		const queryObject = {_id: new ObjectId(userContext.user.id!)};
+		const queryObject = {_id: new ObjectId(userContext.user._id!)};
 		const result = await this.changePassword(userContext, queryObject, body.password);
 		return result;
 	}
@@ -266,7 +266,7 @@ export class AuthService extends GenericApiService<User> {
 		console.log(`password changed using forgot-password for email: ${email}`);
 
 		// delete passwordResetToken
-		await this.passwordResetTokenService.deleteById(User.emptyUserContext, retrievedPasswordResetToken.id!);
+		await this.passwordResetTokenService.deleteById(User.emptyUserContext, retrievedPasswordResetToken._id!);
 		console.log(`passwordResetToken deleted for email: ${email}`);
 
 		return result;
@@ -288,7 +288,9 @@ export class AuthService extends GenericApiService<User> {
 
 		const accessToken = JwtService.sign(
 			payload,
-			config.apiCommonConfig.clientSecret,
+			// todo: fix this - either add it back or come up with a better way to handle passing config to api-common
+			//config.apiCommonConfig.clientSecret,
+			'secret',
 			{
 				expiresIn: jwtExpirationInSeconds
 			}
@@ -358,18 +360,13 @@ export class AuthService extends GenericApiService<User> {
 		return Date.now() + expiresInDays * 24 * 60 * 60 * 1000
 	}
 	
-	override transformList(users: User[]) {
+	override transformList(users: IUser[]) {
 		return super.transformList(users);
 	}
 
-	override transformSingle(user: User) {
+	override transformSingle(user: IUser) {
 		super.transformSingle(user);
-		User.cleanUser(user);
 		return user;
-	}
-
-	override validate(doc: User) {
-		return User.validationSchema.validate(doc, {abortEarly: false});
 	}
 
 }

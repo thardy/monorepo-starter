@@ -6,4 +6,10 @@ export interface IApiConfig {
   externalPort: number;
   jwtSecret: string;
   corsAllowedOrigins: string[];
+  auth: {
+    jwtExpirationInSeconds: number;
+    refreshTokenExpirationInDays: number;
+    deviceIdCookieMaxAgeInDays: number;
+    passwordResetTokenExpirationInMinutes: number;
+  };
 }

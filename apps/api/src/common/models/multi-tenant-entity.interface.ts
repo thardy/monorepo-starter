@@ -1,4 +1,3 @@
-import { TypeboxObjectId } from "../validation/index.js";
 import { IEntity, EntitySchema } from "./entity.interface.js";
 import { Type } from '@sinclair/typebox';
 

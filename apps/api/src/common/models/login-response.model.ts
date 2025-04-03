@@ -1,21 +1,23 @@
 import {IUser} from './user.model.js';
-import {ITokenResponse} from './token-response.model.js';
+import {ITokenResponse, TokenResponseSchema} from './token-response.model.js';
+import { Type } from '@sinclair/typebox';
+import { IUserContext, UserContextSchema } from './user-context.interface.js';
+import { entityUtils } from '../utils/entity.utils.js';
 
 export interface ILoginResponse {
-  tokens?: ITokenResponse;
-  userContext?: {
-    user: IUser;
-  };
+  tokens: ITokenResponse;
+  userContext: IUserContext;
 }
 
-export class LoginResponse implements ILoginResponse {
-  tokens?: ITokenResponse;
-  userContext?: { // note that this userContext has a fully populated org property
-    user: IUser;
-  };
+/**
+ * Schema for LoginResponse
+ */
+export const LoginResponseSchema = Type.Object({
+  tokens: TokenResponseSchema,
+  userContext: UserContextSchema
+});
 
-  constructor(options: ILoginResponse = {}) {
-    this.tokens = options.tokens ?? undefined;
-    this.userContext = options.userContext ?? undefined;
-  }
-}
+/**
+ * Model spec for LoginResponse
+ */
+export const LoginResponseSpec = entityUtils.getModelSpec(LoginResponseSchema);

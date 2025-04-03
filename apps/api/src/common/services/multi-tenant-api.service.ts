@@ -1,5 +1,5 @@
 import { Db } from 'mongodb';
-import { IUserContext, IEntity, QueryOptions } from '../models/index.js';
+import { IUserContext, IEntity, QueryOptions, IModelSpec } from '../models/index.js';
 import { GenericApiService } from './generic-api.service.js';
 import { TenantQueryDecorator } from './tenant-query-decorator.js';
 import { BadRequestError } from '../errors/bad-request.error.js';
@@ -15,9 +15,10 @@ export class MultiTenantApiService<T extends IEntity> extends GenericApiService<
   constructor(
     db: Db, 
     pluralResourceName: string, 
-    singularResourceName: string
+    singularResourceName: string,
+    modelSpec?: IModelSpec
   ) {
-    super(db, pluralResourceName, singularResourceName);
+    super(db, pluralResourceName, singularResourceName, modelSpec);
     this.tenantDecorator = new TenantQueryDecorator();
   }
 

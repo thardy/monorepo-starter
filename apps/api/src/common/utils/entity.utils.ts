@@ -3,14 +3,18 @@ import { ObjectId } from 'mongodb';
 import { TSchema, Type, StaticEncode, StaticDecode } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { ValueError, ValueErrorType } from '@sinclair/typebox/errors';
-import { EntitySchema, AuditableSchema, MultiTenantEntitySchema, IAuditable, IModelSpec } from '../models/index.js';
+import { EntitySchema } from '../models/entity.interface.js';
+import { AuditableSchema } from '../models/auditable.interface.js';
+import { MultiTenantEntitySchema } from '../models/multi-tenant-entity.interface.js';
+import { IAuditable } from '../models/auditable.interface.js';
+import { IModelSpec } from '../models/model-spec.interface.js';
 import { Value } from '@sinclair/typebox/value';
 
 /**
  * List of property names that should not be converted to ObjectIds, even if they end with 'Id'
  * These properties are meant to be stored and queried as strings
  */
-export const PROPERTIES_THAT_ARE_NOT_OBJECT_IDS = ['orgId'];
+//export const PROPERTIES_THAT_ARE_NOT_OBJECT_IDS = ['orgId'];
 
 /**
  * Compiles a TypeBox schema into a validator
@@ -57,13 +61,16 @@ function getModelSpec<T extends TSchema>(
   const fullValidator = getValidator(fullSchema);
   
   // encode receives an entity and converts all properties into their json types (like going from date to iso string)
-  const encode = <E>(entity: E): E => {
+  const encode = <E>(entity: E, overrideSchema?: TSchema): E => {
     if (entity === null || entity === undefined) {
       return entity;
     }
-    // just calling encode here because I haven't seen a scenario yet where we want to call clean, etc - we already called clean when 
-    //  we pulled from the db (we called decode at that time, in transformSingle)
-    return Value.Parse(['Encode'], fullSchema, entity) as never;
+    
+    // Use the override schema if provided, otherwise use the fullSchema
+    const schemaToUse = overrideSchema || fullSchema;
+    
+    // Have to call encode before clean because clean can't handle class instances (like ObjectId)
+    return Value.Parse(['Encode', 'Clean'], schemaToUse, entity) as never;
   }
 
   // decode receives json and converts all properties into their correct types (like going from iso string to date)
@@ -150,18 +157,6 @@ function handleValidationResult(validationErrors: ValueError[] | null, methodNam
   }
 }
 
-// function useFriendlyId(doc: any) {
-//   if (doc && doc._id) {
-//     doc.id = doc._id.toHexString();
-//   }
-// }
-
-// function removeMongoId(doc: any) {
-//   if (doc && doc._id) {
-//     delete doc._id;
-//   }
-// }
-
 function isValidObjectId(id: any) {
   let result = false;
 	if (typeof id === 'string' || id instanceof String) {
@@ -175,22 +170,22 @@ function isValidObjectId(id: any) {
 	return result;
 }
 
-function convertForeignKeysToObjectIds(doc: any, ignoredProperties: string[] = PROPERTIES_THAT_ARE_NOT_OBJECT_IDS) {
-	for (const key of Object.keys(doc)) {
-		if (!ignoredProperties.includes(key) && key.endsWith('Id') && doc[key]) {
-			// Skip if already an ObjectId instance
-			if (doc[key] instanceof ObjectId) {
-				continue;
-			}
+// function convertForeignKeysToObjectIds(doc: any, ignoredProperties: string[] = PROPERTIES_THAT_ARE_NOT_OBJECT_IDS) {
+// 	for (const key of Object.keys(doc)) {
+// 		if (!ignoredProperties.includes(key) && key.endsWith('Id') && doc[key]) {
+// 			// Skip if already an ObjectId instance
+// 			if (doc[key] instanceof ObjectId) {
+// 				continue;
+// 			}
 			
-			const isValid = isValidObjectId(doc[key]);
-			if (!isValid) {
-				throw new ServerError(`property - ${key}, with value - ${doc[key]} is not a valid ObjectId string in entityUtils.convertForeignKeysToObjectIds`);
-			}
-			doc[key] = new ObjectId(doc[key]);
-		}
-	}
-}
+// 			const isValid = isValidObjectId(doc[key]);
+// 			if (!isValid) {
+// 				throw new ServerError(`property - ${key}, with value - ${doc[key]} is not a valid ObjectId string in entityUtils.convertForeignKeysToObjectIds`);
+// 			}
+// 			doc[key] = new ObjectId(doc[key]);
+// 		}
+// 	}
+// }
 
 /**
  * Checks if the provided entity implements the IAuditable interface by checking for audit properties
@@ -226,9 +221,9 @@ function isDecimalMultipleOf(value: number, multipleOf: number, precision: numbe
 export const entityUtils =  {
   handleValidationResult,
   isValidObjectId,
-	convertForeignKeysToObjectIds,
+	//convertForeignKeysToObjectIds,
   isAuditable,
-  PROPERTIES_THAT_ARE_NOT_OBJECT_IDS,
+  //PROPERTIES_THAT_ARE_NOT_OBJECT_IDS,
   getValidator,
   getModelSpec,
   validate,

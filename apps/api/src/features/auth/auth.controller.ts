@@ -4,7 +4,7 @@ import {Db, ObjectId, UpdateResult} from 'mongodb';
 import {BadRequestError, NotFoundError, UnauthenticatedError} from '#common/errors/index';
 import {isAuthenticated} from '#common/middleware/is-authenticated';
 import {passwordUtils, apiUtils} from '#common/utils/index';
-import {LoginResponse, IUser, TokenResponse, IUserContext} from '#common/models/index';
+import {ILoginResponse, LoginResponseSpec, IUser, TokenResponse, ITokenResponse, TokenResponseSpec, IUserContext, UserSpec, PublicUserSchema, UserContextSpec} from '#common/models/index';
 
 import {AuthService} from './auth.service.js';
 
@@ -49,7 +49,7 @@ export class AuthController {
     //cleanUser(user); // todo: consider finding a Typebox way to make sure this happens (encode?) apiUtils.apiResponse!!!! and a PublicUser schema!!!
 
     // todo: find a way to make auth multi-tenant aware. Be able to flip it on and off without hardcoding one way or the other
-    const userContext = { user: user, orgId: user.orgId };
+    const userContext = { user: user };
     //const userContext = { user: user };
 		const deviceId = this.authService.getAndSetDeviceIdCookie(req, res);
 		//console.log(`In authController. deviceId: ${deviceId}`); // todo: delete me
@@ -59,7 +59,7 @@ export class AuthController {
 		// const status = 200;
 		// const apiResponse = apiUtils.apiResponse<LoginResponse>(status, loginResponse);
     // return res.status(status).json(apiResponse);
-	  return apiUtils.apiResponse<LoginResponse | null>(res, 200, {data: loginResponse});
+	  return apiUtils.apiResponse<ILoginResponse>(res, 200, {data: loginResponse}, LoginResponseSpec);
   }
 
   async registerUser(req: Request, res: Response) {
@@ -70,8 +70,7 @@ export class AuthController {
     // we're not handling errors here anymore because createUser throws errors and middleware handles them
     const user = await this.authService.createUser(userContext!, body);
 
-    //return res.status(201).json(apiResponse);
-    return apiUtils.apiResponse<IUser>(res, 201, {data: user});
+    return apiUtils.apiResponse<IUser>(res, 201, {data: user}, UserSpec, PublicUserSchema);
   }
 
   async requestTokenUsingRefreshToken(req: Request, res: Response, next: NextFunction) {
@@ -86,7 +85,7 @@ export class AuthController {
 
     if (tokens) {
       //return res.status(200).json(tokens);
-	    return apiUtils.apiResponse<TokenResponse>(res, 200, {data: tokens});
+	    return apiUtils.apiResponse<ITokenResponse>(res, 200, {data: tokens}, TokenResponseSpec);
     }
     else {
 			throw new UnauthenticatedError();
@@ -97,7 +96,7 @@ export class AuthController {
     const userContext = req.userContext;
     const clientUserContext = {user: userContext!.user};
     //return res.status(200).json(clientUserContext);
-	  return apiUtils.apiResponse<IUserContext>(res, 200, {data: clientUserContext});
+	  return apiUtils.apiResponse<IUserContext>(res, 200, {data: clientUserContext}, UserContextSpec);
   }
 
   afterAuth(req: Request, res: Response, loginResponse: any) {

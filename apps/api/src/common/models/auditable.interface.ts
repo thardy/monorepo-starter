@@ -12,8 +12,8 @@ export interface IAuditable {
  * Schema definition for the IAuditable interface to be used in validation and cleaning
  */
 export const AuditableSchema = Type.Object({
-  _created: TypeboxIsoDate,
+  _created: TypeboxIsoDate(),
   _createdBy: Type.String(),
-  _updated: TypeboxIsoDate,
+  _updated: TypeboxIsoDate(),
   _updatedBy: Type.String(),
 });

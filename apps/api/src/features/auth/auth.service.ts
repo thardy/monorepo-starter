@@ -3,9 +3,9 @@ import {Request, Response} from 'express';
 import moment from 'moment';
 import crypto from 'crypto';
 
-import {BadRequestError, DuplicateKeyError} from '#common/errors/index';
+import {BadRequestError, DuplicateKeyError, ServerError} from '#common/errors/index';
 import {JwtService, EmailService, GenericApiService} from '#common/services/index';
-import {IUserContext, IUser, LoginResponse, TokenResponse} from '#common/models/index';
+import {IUserContext, IUser, EmptyUserContext, passwordValidator, UserSpec} from '#common/models/index';
 import {conversionUtils, entityUtils, passwordUtils} from '#common/utils/index';
 
 import config from '#server/config/config';
@@ -17,7 +17,7 @@ export class AuthService extends GenericApiService<IUser> {
 	private emailService: EmailService;
 
 	constructor(db: Db) {
-		super(db, 'users', 'user');
+		super(db, 'users', 'user', UserSpec);
 
 		this.refreshTokensCollection = db.collection('refreshTokens');
 		this.passwordResetTokenService = new PasswordResetTokenService(db);
@@ -33,26 +33,26 @@ export class AuthService extends GenericApiService<IUser> {
 
 		let loginResponse = null;
 		if (refreshTokenObject) {
-			const tokenResponse = new TokenResponse({
+			const tokenResponse = {
 				accessToken,
 				refreshToken: refreshTokenObject.token,
 				expiresOn: accessTokenExpiresOn
-			});
+			};
 
 
 			// todo: save new lastLoggedIn date (non-blocking) - use an event or async call that we don't wait for
 			//this.authService.updateLastLoggedIn(user);
 			this.transformSingle(userContext.user);
-			loginResponse = new LoginResponse({tokens: tokenResponse, userContext });
+			loginResponse = {tokens: tokenResponse, userContext };
 		}
 
 		return loginResponse;
 	}
 
 	getUserById(id: string) {
-		if (!entityUtils.isValidObjectId(id)) {
-			return Promise.reject(new TypeError('id is not a valid ObjectId'));
-		}
+    if (!entityUtils.isValidObjectId(id)) {
+      throw new BadRequestError('id is not a valid ObjectId');
+    }
 
 		// todo: remove all these direct collection calls and use the GenericApiService methods instead!!!!!
 		return this.collection.findOne({_id: new ObjectId(id)})
@@ -137,7 +137,7 @@ export class AuthService extends GenericApiService<IUser> {
 	}
 
 	async changeLoggedInUsersPassword(userContext: IUserContext, body: any) {
-		const validationResult = User.passwordValidationSchema.validate(body.password, {abortEarly: false});
+    const validationResult = entityUtils.validate(passwordValidator, { password: body.password });
 		entityUtils.handleValidationResult(validationResult, 'AuthService.changePassword');
 
 		const queryObject = {_id: new ObjectId(userContext.user._id!)};
@@ -242,6 +242,11 @@ export class AuthService extends GenericApiService<IUser> {
 		// create passwordResetToken
 		const expiresOn = this.getExpiresOnFromMinutes(config.auth.passwordResetTokenExpirationInMinutes);
 		const passwordResetToken = await this.passwordResetTokenService.createPasswordResetToken(emailAddress, expiresOn);
+		
+		// Check if password reset token was created successfully
+		if (!passwordResetToken) {
+			throw new ServerError(`Failed to create password reset token for email: ${emailAddress}`);
+		}
 
 		// create reset password link
 		const httpOrHttps = config.env === 'local' ? 'http' : 'https';
@@ -250,23 +255,29 @@ export class AuthService extends GenericApiService<IUser> {
 		const resetPasswordLink = `${httpOrHttps}://${clientUrl}/reset-password/${passwordResetToken.token}/${urlEncodedEmail}`;
 
 		const htmlEmailBody = `<strong><a href="${resetPasswordLink}">Reset Password</a></strong>`;
-		await this.emailService.sendHtmlEmail(emailAddress, 'Reset Password for Risk Answers', htmlEmailBody);
+		await this.emailService.sendHtmlEmail(emailAddress, `Reset Password for ${config.appName}`, htmlEmailBody);
 	}
 
 	async resetPassword(email: string, passwordResetToken: string, password: string) {
 		// fetch passwordResetToken
 		const retrievedPasswordResetToken = await this.passwordResetTokenService.getByEmail(email);
+		
+		// Check if token exists
+		if (!retrievedPasswordResetToken) {
+			throw new ServerError(`Unable to retrieve password reset token for email: ${email}`);
+		}
+		
 		// Validate they sent the same token that we have saved for this email (there can only be one) and that it hasn't expired
 		if (retrievedPasswordResetToken.token !== passwordResetToken || retrievedPasswordResetToken.expiresOn < Date.now()) {
 			throw new BadRequestError('Invalid password reset token');
 		}
 
 		// update user password
-		const result = await this.changePassword(User.emptyUserContext, {email}, password);
+		const result = await this.changePassword(EmptyUserContext, {email}, password);
 		console.log(`password changed using forgot-password for email: ${email}`);
 
 		// delete passwordResetToken
-		await this.passwordResetTokenService.deleteById(User.emptyUserContext, retrievedPasswordResetToken._id!);
+		await this.passwordResetTokenService.deleteById(EmptyUserContext, retrievedPasswordResetToken._id.toString());
 		console.log(`passwordResetToken deleted for email: ${email}`);
 
 		return result;
@@ -365,8 +376,7 @@ export class AuthService extends GenericApiService<IUser> {
 	}
 
 	override transformSingle(user: IUser) {
-		super.transformSingle(user);
-		return user;
+		return super.transformSingle(user);
 	}
 
 }

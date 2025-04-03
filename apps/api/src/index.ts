@@ -5,6 +5,7 @@ import { Server } from 'http';
 import { externalApp, setupExternalExpress } from '#root/external-app';
 //import { internalApp, setupInternalExpress } from '#root/internal-app';
 import config from '#server/config/config';
+import {setApiCommonConfig} from './common/config/index.js';
 
 let mongoClient: MongoClient;
 let db: Db;
@@ -19,9 +20,10 @@ const startServer = async () => {
 
   // ensure we have all required config values
   checkForRequiredConfigValues();
+  setApiCommonConfig(config.apiCommonConfig);
 	
   try {
-    mongoClient = new MongoClient(`${config.mongoUri}/${config.databaseName}`);
+    mongoClient = new MongoClient(`${config.mongoDbUrl}/${config.databaseName}`);
     console.log('connecting to mongoDb...');
     await mongoClient.connect();
     db = mongoClient.db(config.databaseName);

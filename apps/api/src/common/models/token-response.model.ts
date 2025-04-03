@@ -1,17 +1,22 @@
+import { Type } from '@sinclair/typebox';
+import { entityUtils } from '../utils/entity.utils.js';
+
 export interface ITokenResponse {
-  accessToken?: string;
-  refreshToken?: string;
-  expiresOn?: number; // timestamp (in milliseconds since Jan 1, 1970 UTC)
+  accessToken: string;
+  refreshToken: string;
+  expiresOn: number; // timestamp (in milliseconds since Jan 1, 1970 UTC)
 }
 
-export class TokenResponse implements ITokenResponse {
-  accessToken?: string;
-  refreshToken?: string;
-  expiresOn?: number; // timestamp (in milliseconds since Jan 1, 1970 UTC)
+/**
+ * Schema for TokenResponse
+ */
+export const TokenResponseSchema = Type.Object({
+  accessToken: Type.String(),
+  refreshToken: Type.String(),
+  expiresOn: Type.Number()
+});
 
-  constructor(options: ITokenResponse = {}) {
-    this.accessToken = options.accessToken ?? undefined;
-    this.refreshToken = options.refreshToken ?? undefined;
-    this.expiresOn = options.expiresOn ?? undefined;
-  }
-}
+/**
+ * Model spec for TokenResponse
+ */
+export const TokenResponseSpec = entityUtils.getModelSpec(TokenResponseSchema);

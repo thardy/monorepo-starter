@@ -1,17 +1,33 @@
-import {IApiConfig} from '../../common/models/api-config.interface.js';
+import {IApiConfig} from './api-config.interface.js';
 
 const loadConfig = (): IApiConfig => {
-  /**
-   * Assume all environment variables are strings
-   */
+  const corsAllowedOrigins = process.env.CORS_ALLOWED_ORIGINS ? JSON.parse(process.env.CORS_ALLOWED_ORIGINS) : [];
+
   return {
-    env: process.env.NODE_ENV ?? 'local',
+    env: process.env.NODE_ENV,
+    appName: process.env.APP_NAME ?? 'Monorepo Starter',
     hostName: process.env.HOST_NAME ?? '',
-    mongoUri: process.env.MONGO_URI ?? '',
-    databaseName: process.env.MONGO_DB_NAME ?? '' ,
-    externalPort: parseInt(process.env.EXTERNAL_PORT ?? '5001', 10),
-    jwtSecret: process.env.JWT_SECRET ?? 'fallback_secret',
-    corsAllowedOrigins: process.env.CORS_ALLOWED_ORIGINS?.split(',') ?? [],
+    mongoDbUrl: process.env.MONGODB_URL,
+    databaseName: process.env.DATABASE_NAME,
+    deployedBranch: process.env.DEPLOYED_BRANCH,
+    externalPort: parseInt(process.env.EXTERNAL_PORT ?? '4000', 10),
+    internalPort: parseInt(process.env.INTERNAL_PORT ?? '8083', 10),
+    corsAllowedOrigins,
+    saltWorkFactor: parseInt(process.env.SALT_WORK_FACTOR ?? '10', 10),
+    jobTypes: process.env.JOB_TYPES,
+    auth: {
+      jwtExpirationInSeconds: parseInt(process.env.JWT_EXPIRATION_SECONDS ?? '3600', 10),
+      refreshTokenExpirationInDays: parseInt(process.env.REFRESH_EXPIRATION_DAYS ?? '7', 10),
+      deviceIdCookieMaxAgeInDays: parseInt(process.env.DEVICEID_MAX_AGE_DAYS ?? '730', 10),
+      passwordResetTokenExpirationInMinutes: parseInt(process.env.PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES ?? '20', 10),
+    },
+    apiCommonConfig: {
+      clientSecret: process.env.CLIENT_SECRET!,
+      email: {
+        sendGridApiKey: process.env.EMAIL_SENDGRID_API_KEY,
+        fromAddress: process.env.EMAIL_FROM_ADDRESS,
+      }
+    }    
   };
 };
 

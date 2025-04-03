@@ -6,6 +6,7 @@ import {IPagedResult} from '../models/paged-result.interface.js';
 import {SortDirection} from '../models/types/index.js';
 import {IApiError} from '../models/api-error.interface.js';
 import {IModelSpec} from '../models/model-spec.interface.js';
+import { TSchema } from '@sinclair/typebox';
 
 export interface IApiResponseOptions<T> {
 	messages?: string[];
@@ -16,7 +17,8 @@ function apiResponse<T>(
 	response: Response, 
 	status: number, 
 	options: IApiResponseOptions<T> = {},
-	modelSpec?: IModelSpec
+	modelSpec?: IModelSpec,
+	publicSchema?: TSchema
 ): Response {
 	const success = status! >= 200 && status! < 300;
 	let apiResponse: IApiResponse<T>;
@@ -25,10 +27,10 @@ function apiResponse<T>(
 	if (modelSpec && options.data) {
 		if (Array.isArray(options.data)) {
 			// For arrays, encode each item
-			options.data = options.data.map(item => modelSpec.encode(item)) as T;
+			options.data = options.data.map(item => modelSpec.encode(item, publicSchema)) as T;
 		} else {
 			// For single entity
-			options.data = modelSpec.encode(options.data) as T;
+			options.data = modelSpec.encode(options.data, publicSchema) as T;
 		}
 	}
 

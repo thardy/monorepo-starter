@@ -195,7 +195,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
     return count;
   }
 
-  async create(userContext: IUserContext, entity: T): Promise<T | null> {
+  async create(userContext: IUserContext, entity: T | Partial<T>): Promise<T | null> {
     const validationErrors = this.validate(entity);
     entityUtils.handleValidationResult(validationErrors, 'GenericApiService.create');
 
@@ -482,7 +482,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
    * @param entities Entity or array of entities to be created
    * @returns The prepared entity or entities
    */
-  onBeforeCreate<E extends T | T[]>(userContext: IUserContext, entities: E): Promise<E> {
+  onBeforeCreate<E extends T | T[] | Partial<T> | Partial<T>[]>(userContext: IUserContext, entities: E): Promise<E> {
     // Apply entity preparation with isCreate=true
     const preparedEntities = this.preparePayload(userContext, entities, true);
     return Promise.resolve(preparedEntities);
@@ -540,11 +540,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   }
 
   transformSingle(single: any): T {
-    // If no entity or no model spec, return as-is
-    if (!single || !this.modelSpec) return single;
-    
-    // Use the decode method from the model spec to remove properties not in the schema and make sure all properties are of the correct type
-    return this.modelSpec.decode(single);
+    return single;
   }
 
   private stripSenderProvidedSystemProperties(doc: any) {

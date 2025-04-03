@@ -31,7 +31,7 @@ export const ProductSchema = Type.Object({
     minimum: 0,
     title: 'Quantity'
   }),
-  someDate: TypeboxIsoDate
+  someDate: TypeboxIsoDate()
 });
 
 export const ProductSpec = entityUtils.getModelSpec(ProductSchema, { isAuditable: true });

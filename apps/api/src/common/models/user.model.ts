@@ -3,9 +3,7 @@ import {IAuditable} from './auditable.interface.js';
 import {IEntity} from './entity.interface.js';
 import {Type} from '@sinclair/typebox';
 import {entityUtils} from '../utils/entity.utils.js';
-
-export const ROLES = ["user", "admin"] as const;
-export type Role = (typeof ROLES)[number];
+import { TypeCompiler } from '@sinclair/typebox/compiler';
 
 export interface IUser extends IAuditable, IEntity {
 	email?: string;
@@ -13,15 +11,26 @@ export interface IUser extends IAuditable, IEntity {
 	lastName?: string;
 	displayName?: string;
 	password?: string;
-	roles?: Role[];
+	roles?: string[];
 	_lastLoggedIn?: Date;
 	_lastPasswordChange?: Date;
 }
 
+export const UserPasswordSchema = Type.Object({
+	password: Type.String({
+		title: 'Password',
+		minLength: 6,
+		maxLength: 30
+	}),
+});
+
+// Create a validator for just the password schema
+export const passwordValidator = TypeCompiler.Compile(UserPasswordSchema);
+
 // User-specific properties schema
 export const UserSchema = Type.Object({
   email: Type.String({
-    title: 'Name',
+    title: 'Email',
 		format: 'email'
   }),
 	firstName: Type.Optional(Type.String({
@@ -33,21 +42,18 @@ export const UserSchema = Type.Object({
 	displayName: Type.Optional(Type.String({
 		title: 'Display Name'
 	})),
-	password: Type.String({
-		title: 'Password',
-		minLength: 6,
-		maxLength: 30
-	}),
+	// Add password using the same type definition from UserPasswordSchema
+	password: Type.Optional(UserPasswordSchema.properties.password),
 	roles: Type.Array(Type.String({
 		title: 'Roles',
-		enum: ROLES
+		// We are going to allow defining roles in the database - they won't be hard-coded here
 	})),
 	_lastLoggedIn: TypeboxIsoDate({ title: 'Last Login Date' }),
 	_lastPasswordChange: TypeboxIsoDate({ title: 'Last Password Change Date' }),
 });
 
 // Public schema (excludes sensitive fields)
-const PublicUserSchema = Type.Omit(UserSchema, ['password']);
+export const PublicUserSchema = Type.Omit(UserSchema, ['password']);
 
 export const UserSpec = entityUtils.getModelSpec(UserSchema, { isAuditable: true });
 

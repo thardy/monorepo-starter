@@ -4,9 +4,20 @@ import {Db, ObjectId, UpdateResult} from 'mongodb';
 import {BadRequestError, NotFoundError, UnauthenticatedError} from '#common/errors/index';
 import {isAuthenticated} from '#common/middleware/is-authenticated';
 import {passwordUtils, apiUtils} from '#common/utils/index';
-import {ILoginResponse, LoginResponseSpec, IUser, TokenResponse, ITokenResponse, TokenResponseSpec, IUserContext, UserSpec, PublicUserSchema, UserContextSpec} from '#common/models/index';
+import {
+  ILoginResponse, 
+  LoginResponseSpec, 
+  IUser, 
+  ITokenResponse, 
+  TokenResponseSpec, 
+  IUserContext, 
+  UserSpec, 
+  PublicUserSchema, 
+  UserContextSpec
+} from '#common/models/index';
 
 import {AuthService} from './auth.service.js';
+import { config } from '#root/src/common/config/index';
 
 export class AuthController {
   authService: AuthService;
@@ -46,12 +57,12 @@ export class AuthController {
     }
 
 	  // Now that we have compared the password, let's clean the user, so we don't send the password anywhere
-    //cleanUser(user); // todo: consider finding a Typebox way to make sure this happens (encode?) apiUtils.apiResponse!!!! and a PublicUser schema!!!
-
-    // todo: find a way to make auth multi-tenant aware. Be able to flip it on and off without hardcoding one way or the other
-    const userContext = { user: user };
-    //const userContext = { user: user };
-		const deviceId = this.authService.getAndSetDeviceIdCookie(req, res);
+    // this is now handled completely by passing a public schema to apiUtils.apiResponse
+    // const cleanUser = User.clean(user);
+    
+    const userContext = { user: user, orgId: user._orgId };
+    
+    const deviceId = this.authService.getAndSetDeviceIdCookie(req, res);
 		//console.log(`In authController. deviceId: ${deviceId}`); // todo: delete me
     const loginResponse = await this.authService.logUserIn(userContext, deviceId);
 		//console.log(`loginResponse: ${JSON.stringify(loginResponse)}`); // todo: delete me
@@ -59,7 +70,7 @@ export class AuthController {
 		// const status = 200;
 		// const apiResponse = apiUtils.apiResponse<LoginResponse>(status, loginResponse);
     // return res.status(status).json(apiResponse);
-	  return apiUtils.apiResponse<ILoginResponse>(res, 200, {data: loginResponse}, LoginResponseSpec);
+	  return apiUtils.apiResponse<ILoginResponse | null>(res, 200, {data: loginResponse}, LoginResponseSpec);
   }
 
   async registerUser(req: Request, res: Response) {
@@ -77,7 +88,7 @@ export class AuthController {
     const refreshToken = req.query.refreshToken;
     const deviceId = this.authService.getDeviceIdFromCookie(req);
 		console.log(`deviceId: ${deviceId}`); // todo: delete me
-    let tokens: TokenResponse | null = null;
+    let tokens: ITokenResponse | null = null;
 
     if (refreshToken && typeof refreshToken === 'string') {
       tokens = await this.authService.requestTokenUsingRefreshToken(refreshToken, deviceId);

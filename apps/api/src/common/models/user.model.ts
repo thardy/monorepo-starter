@@ -1,16 +1,17 @@
 import { TypeboxIsoDate, TypeboxMoney } from '../validation/typebox-extensions.js';
-import {IAuditable} from './auditable.interface.js';
-import {IEntity} from './entity.interface.js';
+import {IAuditable} from './auditable.model.js';
+import {IEntity, EntitySchema} from './entity.model.js';
 import {Type} from '@sinclair/typebox';
 import {entityUtils} from '../utils/entity.utils.js';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
+import { AuditableSchema } from './auditable.model.js';
 
 export interface IUser extends IAuditable, IEntity {
-	email?: string;
+	email: string;
 	firstName?: string;
 	lastName?: string;
 	displayName?: string;
-	password?: string;
+	password: string;
 	roles?: string[];
 	_lastLoggedIn?: Date;
 	_lastPasswordChange?: Date;
@@ -43,30 +44,19 @@ export const UserSchema = Type.Object({
 		title: 'Display Name'
 	})),
 	// Add password using the same type definition from UserPasswordSchema
-	password: Type.Optional(UserPasswordSchema.properties.password),
-	roles: Type.Array(Type.String({
+	password: UserPasswordSchema.properties.password,
+	roles: Type.Optional(Type.Array(Type.String({
 		title: 'Roles',
 		// We are going to allow defining roles in the database - they won't be hard-coded here
-	})),
-	_lastLoggedIn: TypeboxIsoDate({ title: 'Last Login Date' }),
-	_lastPasswordChange: TypeboxIsoDate({ title: 'Last Password Change Date' }),
+	}))),
+	_lastLoggedIn: Type.Optional(TypeboxIsoDate({ title: 'Last Login Date' })),
+	_lastPasswordChange: Type.Optional(TypeboxIsoDate({ title: 'Last Password Change Date' })),
 });
 
-// Public schema (excludes sensitive fields)
-export const PublicUserSchema = Type.Omit(UserSchema, ['password']);
-
+// Create the model spec first
 export const UserSpec = entityUtils.getModelSpec(UserSchema, { isAuditable: true });
 
+// Then create the public schema by omitting the password from the full schema
+export const PublicUserSchema = Type.Omit(UserSpec.fullSchema, ['password']);
 
-// /**
-//  * Mutates the passed-in user to remove sensitive information
-//  */
-// export function cleanUser(user: IUser) {
-// 	delete user.password;
-// 	// if (user.facebook) {
-// 	//   delete user.facebook.token;
-// 	// }
-// 	// if (user.google) {
-// 	//   delete user.google.token;
-// 	// }
-// }
+

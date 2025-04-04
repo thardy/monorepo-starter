@@ -5,6 +5,7 @@ import config from '#server/config/config';
 import testUtils from '#test/test.utils';
 import testApiUtils from '#test/test-api.utils';
 import { externalApp, setupExternalExpress } from '#root/external-app';
+import { setApiCommonConfig } from '#common/config/api-common-config';
 
 let mongo: MongoMemoryServer;
 let mongoClient: MongoClient;
@@ -14,7 +15,18 @@ vi.setConfig({ testTimeout: 60000 });
 
 beforeAll(async () => {
   try {
-    // setApiCommonConfig(config.apiCommonConfig);
+    // Initialize API common config with mock values for testing
+    setApiCommonConfig({
+      clientSecret: 'test-secret',
+      app: {
+        multiTenant: true
+      },
+      email: {
+        sendGridApiKey: 'mock-api-key',
+        fromAddress: 'test@example.com'
+      }
+    });
+
     mongo = await MongoMemoryServer.create({
       instance: {
         port: 27017 + Math.floor(Math.random() * 1000), // Use a random port in safe range

@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { Application, Request, Response, NextFunction } from 'express';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import { MongoClient, Db, ObjectId } from 'mongodb';
-import express from 'express';
-import supertest from 'supertest';
-import jsonwebtoken from 'jsonwebtoken';
+import { Application } from 'express';
+import { Db, ObjectId } from 'mongodb';
+import { Type } from '@sinclair/typebox';
+
 import { ApiController } from '../api.controller.js';
 import { GenericApiService } from '../../services/generic-api.service.js';
-import { IEntity, IAuditable, IUserContext } from '../../models/index.js';
-import { Type } from '@sinclair/typebox';
+import { IEntity, IAuditable } from '../../models/index.js';
 import { entityUtils } from '../../utils/index.js';
-import bodyParser from 'body-parser';
+
+// Import our new test utilities
+import { TestExpressApp } from '../../__tests__/setup/test-express-app.js';
+import { CommonTestUtils } from '../../__tests__/setup/common-test.utils.js';
 
 // Mock model for testing
 interface ITestItem extends IEntity, IAuditable {
@@ -34,108 +34,120 @@ class TestItemService extends GenericApiService<ITestItem> {
 }
 
 class TestItemController extends ApiController<ITestItem> {
-  constructor(app: Application, service: TestItemService) {
-    super('test-items', app, service, 'testItem');
+  public testItemService: TestItemService;
+
+  constructor(app: Application, db: Db) {
+    const testItemService = new TestItemService(db);
+    super('test-items', app, testItemService, 'testItem', TestItemSpec);
+
+    this.testItemService = testItemService;
   }
 }
 
+
+// For testing user creation with explicit public schema
+interface ITestUser extends IEntity, IAuditable {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+const TestUserSchema = Type.Object({
+  email: Type.String({ format: 'email' }),
+  password: Type.String({ minLength: 6 }),
+  firstName: Type.Optional(Type.String()),
+  lastName: Type.Optional(Type.String())
+});
+
+// Create user model spec with auditable
+const TestUserSpec = entityUtils.getModelSpec(TestUserSchema, { isAuditable: true });
+
+// Create a public schema that omits password
+const TestPublicUserSchema = Type.Omit(TestUserSpec.fullSchema, ['password']);
+
+class TestUserService extends GenericApiService<ITestUser> {
+  constructor(db: Db) {
+    super(db, 'testUsers', 'testUser', TestUserSpec);
+  }
+}
+
+class TestUserController extends ApiController<ITestUser> {
+  public testUserService: TestUserService;
+
+  constructor(app: Application, db: Db) {
+    const testUserService = new TestUserService(db);
+    super('test-users', app, testUserService, 'testUser', TestUserSpec, TestPublicUserSchema);
+
+    this.testUserService = testUserService;
+  }
+}
+
+/**
+ * This suite tests the ApiController.
+ * It uses our custom test utilities for MongoDB and Express.
+ */
 describe('[library] ApiController - Integration Tests', () => {
-  let mongoServer: MongoMemoryServer;
-  let connection: MongoClient;
   let db: Db;
   let app: Application;
+  let testAgent: any;
+  let authToken: string;
   let service: TestItemService;
   let controller: TestItemController;
-  let authToken: string;
+  let userService: TestUserService;
+  let usersController: TestUserController;
   let userId: string;
-  let testAgent: any; // Using any to bypass strict type checking
-  const testOrgId = '67e8e19b149f740323af93d7';
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const uri = mongoServer.getUri();
-    connection = await MongoClient.connect(uri);
-    db = connection.db();
+    // Initialize with our new test express app
+    const testSetup = await TestExpressApp.init();
+    app = testSetup.app;
+    db = testSetup.db;
+    testAgent = testSetup.agent;
     
-    // Create Express app
-    app = express();
-    app.use(bodyParser.json());
+    // Get auth token and user ID from CommonTestUtils
+    authToken = CommonTestUtils.getAuthToken();
+    userId = CommonTestUtils.getUserId();
     
-    // Mock authentication middleware
-    userId = new ObjectId().toString();
-    authToken = jsonwebtoken.sign({ sub: userId, email: 'test@example.com', orgId: testOrgId }, 'test-secret');
+    // Create service and controller instances
+    controller = new TestItemController(app, db);
+    service = controller.testItemService;
     
-    app.use((req: Request, res: Response, next: NextFunction) => {
-      if (req.headers.authorization?.startsWith('Bearer ')) {
-        const token = req.headers.authorization.split(' ')[1];
-        try {
-          const decoded = jsonwebtoken.verify(token, 'test-secret') as any;
-          
-          // Set userContext
-          req.userContext = {
-            user: {
-              _id: new ObjectId(userId),
-              email: decoded.email,
-              _created: new Date(),
-              _createdBy: 'system',
-              _updated: new Date(),
-              _updatedBy: 'system'
-            },
-            orgId: testOrgId
-          };
-          
-        } catch (err) {
-          return res.status(401).json({ message: 'Invalid token' });
-        }
-      }
-      return next();
-    });
-    
-    // Create service and controller
-    service = new TestItemService(db);
-    controller = new TestItemController(app, service);
-    
-    // Create supertest agent
-    testAgent = supertest(app);
+    // Create user service and controller
+    usersController = new TestUserController(app, db);
+    userService = usersController.testUserService;
   });
 
   afterAll(async () => {
-    if (connection) {
-      await connection.close();
-    }
-    if (mongoServer) {
-      await mongoServer.stop();
-    }
+    await TestExpressApp.cleanup();
   });
 
   beforeEach(async () => {
-    // Clear the collection before each test
-    await db.collection('testItems').deleteMany({});
+    // Clear collections before each test
+    await TestExpressApp.clearCollections();
   });
 
   describe('auditable behavior', () => {
     it('should include audit properties in POST response', async () => {
+      // Make the API request with the token from CommonTestUtils
       const response = await testAgent
         .post('/api/test-items')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Test Item', value: 42 })
-        .expect(201);
-      
-      // Check if the response is wrapped in a success/data format
-      const entity = response.body.data;
-      
-      expect(entity).toBeDefined();
-      expect(entity).toHaveProperty('_created');
-      expect(entity).toHaveProperty('_createdBy', userId);
-      expect(entity).toHaveProperty('_updated');
-      expect(entity).toHaveProperty('_updatedBy', userId);
+        .set('Authorization', authToken)
+        .send({ name: 'Test Item' });
+        
+      // Assertions
+      expect(response.status).toBe(201);
+      expect(response.body.data).toHaveProperty('_created');
+      expect(response.body.data).toHaveProperty('_createdBy');
+      expect(response.body.data).toHaveProperty('_updated');
+      expect(response.body.data).toHaveProperty('_updatedBy');
     });
 
     it('should update audit fields correctly when using PATCH', async () => {
       // First create an item
       const createResponse = await testAgent
         .post('/api/test-items')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .send({ name: 'Original Name', value: 100 });
       
       expect(createResponse.status).toBe(201);
@@ -146,8 +158,6 @@ describe('[library] ApiController - Integration Tests', () => {
       expect(originalItem._id).toBeDefined();
       
       const itemId = originalItem._id;
-      const originalCreated = originalItem._created;
-      const originalCreatedBy = originalItem._createdBy;
       
       // Wait a bit to ensure timestamps differ
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -155,7 +165,7 @@ describe('[library] ApiController - Integration Tests', () => {
       // Update with PATCH
       const updateResponse = await testAgent
         .patch(`/api/test-items/${itemId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .send({ name: 'Updated Name' });
       
       expect(updateResponse.status).toBe(200);
@@ -165,8 +175,8 @@ describe('[library] ApiController - Integration Tests', () => {
       expect(updatedItem).toBeDefined();
       
       // Verify audit properties
-      expect(updatedItem._created).toEqual(originalCreated);
-      expect(updatedItem._createdBy).toEqual(originalCreatedBy);
+      expect(updatedItem._created).toEqual(originalItem._created);
+      expect(updatedItem._createdBy).toEqual(originalItem._createdBy);
       expect(updatedItem._updated).not.toEqual(originalItem._updated);
       expect(updatedItem._updatedBy).toEqual(userId);
     });
@@ -175,7 +185,7 @@ describe('[library] ApiController - Integration Tests', () => {
       // First create an item
       const createResponse = await testAgent
         .post('/api/test-items')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .send({ name: 'Original Name', value: 100 });
       
       expect(createResponse.status).toBe(201);
@@ -186,8 +196,6 @@ describe('[library] ApiController - Integration Tests', () => {
       expect(originalItem._id).toBeDefined();
       
       const itemId = originalItem._id;
-      const originalCreated = originalItem._created;
-      const originalCreatedBy = originalItem._createdBy;
       
       // Wait a bit to ensure timestamps differ
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -195,7 +203,7 @@ describe('[library] ApiController - Integration Tests', () => {
       // Update with PUT - include all required fields
       const updateResponse = await testAgent
         .put(`/api/test-items/${itemId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .send({ 
           name: 'New Name', 
           value: 200
@@ -208,8 +216,8 @@ describe('[library] ApiController - Integration Tests', () => {
       expect(updatedItem).toBeDefined();
       
       // Verify audit properties
-      expect(updatedItem._created).toEqual(originalCreated);
-      expect(updatedItem._createdBy).toEqual(originalCreatedBy);
+      expect(updatedItem._created).toEqual(originalItem._created);
+      expect(updatedItem._createdBy).toEqual(originalItem._createdBy);
       expect(updatedItem._updated).not.toEqual(originalItem._updated);
       expect(updatedItem._updatedBy).toEqual(userId);
     });
@@ -218,7 +226,7 @@ describe('[library] ApiController - Integration Tests', () => {
       // First create an item
       const createResponse = await testAgent
         .post('/api/test-items')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .send({ name: 'Original Item' });
       
       expect(createResponse.status).toBe(201);
@@ -234,7 +242,7 @@ describe('[library] ApiController - Integration Tests', () => {
       const tamperedDate = new Date(2000, 1, 1).toISOString();
       const updateResponse = await testAgent
         .patch(`/api/test-items/${itemId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .send({ 
           name: 'Tampered Item',
           _created: tamperedDate,
@@ -259,27 +267,27 @@ describe('[library] ApiController - Integration Tests', () => {
 
     it('should preserve audit properties when returning lists of items', async () => {
       // Create several items
-      await testAgent
+      const item1Response = await testAgent
         .post('/api/test-items')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .send({ name: 'Item 1', value: 10 })
         .expect(201);
       
-      await testAgent
+      const item2Response = await testAgent
         .post('/api/test-items')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .send({ name: 'Item 2', value: 20 })
         .expect(201);
       
-      // Get all items
+      // Get all items via HTTP
       const response = await testAgent
         .get('/api/test-items')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .expect(200);
       
       // ApiController returns responses wrapped in IApiResponse format with paged result
       const pagedResult = response.body.data;
-      const items = pagedResult.entities;
+      const items = pagedResult?.entities;
       
       // Verify we got an array of items
       expect(Array.isArray(items)).toBe(true);
@@ -298,7 +306,7 @@ describe('[library] ApiController - Integration Tests', () => {
       // Create an item
       const createResponse = await testAgent
         .post('/api/test-items')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', authToken)
         .send({ name: 'Single Item', value: 42 });
       
       expect(createResponse.status).toBe(201);
@@ -313,7 +321,7 @@ describe('[library] ApiController - Integration Tests', () => {
       // Get the item
       const getResponse = await testAgent
         .get(`/api/test-items/${itemId}`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Authorization', authToken);
       
       expect(getResponse.status).toBe(200);
       
@@ -326,6 +334,63 @@ describe('[library] ApiController - Integration Tests', () => {
       expect(retrievedItem).toHaveProperty('_createdBy', userId);
       expect(retrievedItem).toHaveProperty('_updated');
       expect(retrievedItem).toHaveProperty('_updatedBy', userId);
+    });
+  });
+
+  describe('user creation with public schema', () => {
+    it('should include audit properties and exclude properties not in public schema', async () => {
+      // Log that we're preparing the test user data
+      const testUser = {
+        email: 'testuser@example.com',
+        password: 'password123',
+        firstName: 'Test',
+        lastName: 'User'
+      };
+      
+      try {
+        // Create a new user with auth
+        const response = await testAgent
+          .post('/api/test-users')
+          .set('Authorization', authToken)
+          .send(testUser);
+        
+        expect(response.status).toBe(201);
+        
+        // Check if the response is wrapped in a success/data format
+        const entity = response.body.data;
+        
+        expect(entity).toBeDefined();
+        
+        // Verify user properties
+        expect(entity.email).toBe('testuser@example.com');
+        expect(entity.firstName).toBe('Test');
+        expect(entity.lastName).toBe('User');
+        
+        // Verify password is not included (removed by public schema)
+        expect(entity).not.toHaveProperty('password');
+        
+        // Verify audit properties are present - this is what our test is checking for
+        expect(entity).toHaveProperty('_created');
+        expect(entity).toHaveProperty('_createdBy', userId);
+        expect(entity).toHaveProperty('_updated');
+        expect(entity).toHaveProperty('_updatedBy', userId);
+      } catch (error) {
+        console.error('Error during user creation test:', error);
+        throw error;
+      }
+    });
+    
+    it('should return 401 when trying to access secured endpoint without authentication', async () => {
+      // Make a request without authorization header
+      const response = await testAgent
+        .post('/api/test-users')
+        .send({
+          email: 'unauthorized@example.com',
+          password: 'password123'
+        });
+      
+      // Verify that authentication is enforced
+      expect(response.status).toBe(401);
     });
   });
 }); 

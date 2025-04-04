@@ -3,10 +3,9 @@ import { ObjectId } from 'mongodb';
 import { TSchema, Type, StaticEncode, StaticDecode } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { ValueError, ValueErrorType } from '@sinclair/typebox/errors';
-import { EntitySchema } from '../models/entity.interface.js';
-import { AuditableSchema } from '../models/auditable.interface.js';
-import { MultiTenantEntitySchema } from '../models/multi-tenant-entity.interface.js';
-import { IAuditable } from '../models/auditable.interface.js';
+import { EntitySchema } from '../models/entity.model.js';
+import { AuditableSchema } from '../models/auditable.model.js';
+import { IAuditable } from '../models/auditable.model.js';
 import { IModelSpec } from '../models/model-spec.interface.js';
 import { Value } from '@sinclair/typebox/value';
 
@@ -46,10 +45,6 @@ function getModelSpec<T extends TSchema>(
   
   if (options.isAuditable) {
     schemasToIntersect.push(AuditableSchema);
-  }
-  
-  if (options.isMultiTenant) {
-    schemasToIntersect.push(MultiTenantEntitySchema);
   }
   
   // Create the full schema using Type.Intersect
@@ -120,25 +115,6 @@ function validate(
   
   if (!valid) {
     const errors = [...validator.Errors(data)];
-    
-    // Debug logging for multipleOf errors
-    errors.forEach(error => {
-      console.log('Validation error:', error);
-      // Log more details about the error
-      if (error.schema && error.schema.multipleOf) {
-        console.log('MultipleOf validation error details:');
-        console.log('- Value:', error.value);
-        console.log('- Schema:', error.schema);
-        console.log('- Path:', error.path);
-        // Check mathematical test
-        if (typeof error.value === 'number' && typeof error.schema.multipleOf === 'number') {
-          console.log('- Modulo result:', error.value % error.schema.multipleOf);
-          console.log('- Division result:', error.value / error.schema.multipleOf);
-          console.log('- Is integer check:', Number.isInteger(error.value / error.schema.multipleOf));
-        }
-      }
-    });
-    
     return errors;
   }
   

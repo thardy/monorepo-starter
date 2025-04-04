@@ -10,7 +10,7 @@ import { ServerError, IdNotFoundError } from '../../errors/index.js';
 interface TestEntity extends IEntity {
   name: string;
   description?: string;
-  orgId?: string;
+  _orgId?: string;
 }
 
 // Helper function to create a mock user context
@@ -18,12 +18,13 @@ const createUserContext = (orgId: string): IUserContext => ({
   user: { 
     _id: new ObjectId(), 
     email: 'test@example.com',
+    password: '',
     _created: new Date(),
     _createdBy: 'system',
     _updated: new Date(),
     _updatedBy: 'system'
   },
-  orgId,
+  _orgId: orgId
 });
 
 // Creates a valid MongoDB ObjectId string
@@ -58,7 +59,7 @@ describe('[library] MultiTenantApiService', () => {
       findOne: vi.fn().mockResolvedValue({
         _id: new ObjectId(validObjectIdString),
         name: 'Original Name',
-        orgId: testOrgId,
+        _orgId: testOrgId,
         created: new Date(),
         createdBy: 'test-user'
       }),
@@ -67,7 +68,7 @@ describe('[library] MultiTenantApiService', () => {
         value: {
           _id: new ObjectId(validObjectIdString),
           name: 'Updated Name',
-          orgId: testOrgId,
+          _orgId: testOrgId,
           created: new Date(),
           createdBy: 'test-user',
           updated: new Date(),
@@ -139,12 +140,12 @@ describe('[library] MultiTenantApiService', () => {
       // Arrange
       const userContext = createUserContext(testOrgId);
       // Create query with a different orgId than the one in userContext
-      const query = { name: 'Test', orgId: otherOrgId };
+      const query = { name: 'Test', _orgId: otherOrgId };
       
       // Mock the TenantQueryDecorator.applyTenantToQuery implementation
       // to simulate real behavior since we're spying on it
       vi.mocked(TenantQueryDecorator.prototype.applyTenantToQuery).mockImplementationOnce(
-        (userCtx, queryObj) => ({ ...queryObj, orgId: userCtx.orgId })
+        (userCtx, queryObj) => ({ ...queryObj, _orgId: userCtx._orgId })
       );
       
       // Get the protected method and bind it to the service instance
@@ -154,8 +155,8 @@ describe('[library] MultiTenantApiService', () => {
       const result = prepareQuery(userContext, query);
       
       // Assert
-      expect(result.orgId).toBe(testOrgId);
-      expect(result.orgId).not.toBe(otherOrgId);
+      expect(result._orgId).toBe(testOrgId);
+      expect(result._orgId).not.toBe(otherOrgId);
     });
   });
   
@@ -203,7 +204,7 @@ describe('[library] MultiTenantApiService', () => {
             newOptions.filters = {};
           }
           // This mirrors the actual implementation which overwrites any existing orgId filter
-          newOptions.filters.orgId = { eq: userCtx.orgId };
+          newOptions.filters._orgId = { eq: userCtx._orgId };
           return newOptions;
         }
       );
@@ -215,8 +216,8 @@ describe('[library] MultiTenantApiService', () => {
       const result = prepareQueryOptions(userContext, queryOptions);
       
       // Assert
-      expect(result.filters?.orgId?.eq).toBe(testOrgId);
-      expect(result.filters?.orgId?.eq).not.toBe(otherOrgId);
+      expect(result.filters?._orgId?.eq).toBe(testOrgId);
+      expect(result.filters?._orgId?.eq).not.toBe(otherOrgId);
     });
   });
   
@@ -233,7 +234,7 @@ describe('[library] MultiTenantApiService', () => {
       const result = prepareEntity(userContext, entity, true);
       
       // Assert
-      expect(result).toHaveProperty('orgId', testOrgId);
+      expect(result).toHaveProperty('_orgId', testOrgId);
     });
     
     it('should throw BadRequestError if userContext is undefined', () => {
@@ -253,6 +254,7 @@ describe('[library] MultiTenantApiService', () => {
         user: { 
           _id: new ObjectId(), 
           email: 'test@example.com',
+          password: '',
           _created: new Date(),
           _createdBy: 'system',
           _updated: new Date(),

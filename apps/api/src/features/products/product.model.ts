@@ -1,6 +1,6 @@
 // import mongoose, { Schema, Document, Types, ObjectId } from 'mongoose';
 import { Type, Static } from '@sinclair/typebox';
-import { IAuditable } from '#root/src/common/models/auditable.interface';
+import { IAuditable } from '#root/src/common/models/auditable.model';
 import { IEntity } from '#common/models/index';
 import { entityUtils } from '#common/utils/index';
 import { TypeboxMoney } from '#common/validation/index';

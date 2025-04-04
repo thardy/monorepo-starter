@@ -26,7 +26,7 @@ export class MultiTenantApiService<T extends IEntity> extends GenericApiService<
    * Override the query preparation hook to add tenant filtering
    */
   protected override prepareQuery(userContext: IUserContext, query: any): any {
-    if (!userContext || !userContext.orgId) {
+    if (!userContext || !userContext._orgId) {
       throw new BadRequestError('A valid userContext was not provided to MultiTenantApiService.prepareQuery');
     }
     
@@ -42,7 +42,7 @@ export class MultiTenantApiService<T extends IEntity> extends GenericApiService<
    * Override the query options preparation hook to add tenant filtering
    */
   protected override prepareQueryOptions(userContext: IUserContext, queryOptions: QueryOptions): QueryOptions {
-    if (!userContext || !userContext.orgId) {
+    if (!userContext || !userContext._orgId) {
       throw new BadRequestError('A valid userContext was not provided to MultiTenantApiService.prepareQueryOptions');
     }
     
@@ -59,7 +59,7 @@ export class MultiTenantApiService<T extends IEntity> extends GenericApiService<
    * This will be called for both create and update operations
    */
   protected override prepareEntity(userContext: IUserContext, entity: T, isCreate: boolean): T | Partial<T> {
-    if (!userContext || !userContext.orgId) {
+    if (!userContext || !userContext._orgId) {
       throw new BadRequestError('A valid userContext was not provided to MultiTenantApiService.prepareEntity');
     }
     
@@ -68,7 +68,7 @@ export class MultiTenantApiService<T extends IEntity> extends GenericApiService<
     
     // Then apply tenant ID
     const orgIdField = this.tenantDecorator.getOrgIdField();
-    (preparedEntity as any)[orgIdField] = userContext.orgId;
+    (preparedEntity as any)[orgIdField] = userContext._orgId;
     
     return preparedEntity;
   }

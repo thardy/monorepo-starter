@@ -23,6 +23,10 @@ const loadConfig = (): IApiConfig => {
     },
     apiCommonConfig: {
       clientSecret: process.env.CLIENT_SECRET!,
+      app: {
+        // all of these app configs should be hardcoded here and not changed from environment to environment
+        multiTenant: true
+      },
       email: {
         sendGridApiKey: process.env.EMAIL_SENDGRID_API_KEY,
         fromAddress: process.env.EMAIL_FROM_ADDRESS,

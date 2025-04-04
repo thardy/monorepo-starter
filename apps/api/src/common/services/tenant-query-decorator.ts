@@ -4,7 +4,7 @@ import { ServerError } from '../errors/server.error.js';
 export interface ITenantQueryOptions {
   /**
    * The field name used to store the organization ID in the database
-   * @default 'orgId'
+   * @default '_orgId'
    */
   orgIdField?: string;
   
@@ -18,7 +18,7 @@ export interface ITenantQueryOptions {
  * Default options for the tenant query decorator
  */
 export const DEFAULT_TENANT_OPTIONS: ITenantQueryOptions = {
-  orgIdField: 'orgId',
+  orgIdField: '_orgId',
   excludedCollections: []
 };
 
@@ -44,17 +44,17 @@ export class TenantQueryDecorator {
     
     const shouldApplyTenantFilter = 
       !this.options.excludedCollections?.includes(collectionName) &&
-      userContext?.orgId;
+      userContext?._orgId;
     
     if (shouldApplyTenantFilter) {
       // Create a new query object that includes the tenant filter
-      const orgIdField = this.options.orgIdField || 'orgId';
-      result = { ...queryObject, [orgIdField]: userContext.orgId };
+      const orgIdField = this.options.orgIdField || '_orgId';
+      result = { ...queryObject, [orgIdField]: userContext._orgId };
     } 
-    else if (!userContext?.orgId) {
+    else if (!userContext?._orgId) {
       // Don't throw for excluded collections
       if (!this.options.excludedCollections?.includes(collectionName)) {
-        throw new ServerError('No orgId found in userContext');
+        throw new ServerError('No _orgId found in userContext');
       }
     }
     
@@ -73,7 +73,7 @@ export class TenantQueryDecorator {
     
     const shouldApplyTenantFilter = 
       !this.options.excludedCollections?.includes(collectionName) &&
-      userContext?.orgId;
+      userContext?._orgId;
     
     if (shouldApplyTenantFilter) {
       // Clone the query options to avoid modifying the original
@@ -85,13 +85,13 @@ export class TenantQueryDecorator {
       }
       
       // Add orgId filter
-      const orgIdField = this.options.orgIdField || 'orgId';
-      modifiedQueryOptions.filters[orgIdField] = { eq: userContext.orgId };
+      const orgIdField = this.options.orgIdField || '_orgId';
+      modifiedQueryOptions.filters[orgIdField] = { eq: userContext._orgId };
       
       result = modifiedQueryOptions;
     } 
-    else if (!userContext?.orgId) {
-      throw new ServerError('No orgId found in userContext');
+    else if (!userContext?._orgId) {
+      throw new ServerError('No _orgId found in userContext');
     }
     
     return result;
@@ -109,21 +109,21 @@ export class TenantQueryDecorator {
     
     const shouldApplyTenantFilter = 
       !this.options.excludedCollections?.includes(collectionName) &&
-      userContext?.orgId;
+      userContext?._orgId;
     
     if (shouldApplyTenantFilter) {
-      const orgIdField = this.options.orgIdField || 'orgId';
+      const orgIdField = this.options.orgIdField || '_orgId';
       
       // Create a new entity with the orgId property
       result = { 
         ...entity,
-        [orgIdField]: userContext.orgId
+        [orgIdField]: userContext._orgId
       };
     } 
-    else if (!userContext?.orgId) {
+    else if (!userContext?._orgId) {
       // Don't throw for excluded collections
       if (!this.options.excludedCollections?.includes(collectionName)) {
-        throw new ServerError('No orgId found in userContext');
+        throw new ServerError('No _orgId found in userContext');
       }
     }
     
@@ -135,6 +135,6 @@ export class TenantQueryDecorator {
    * @returns The organization ID field name
    */
   getOrgIdField(): string {
-    return this.options.orgIdField || 'orgId';
+    return this.options.orgIdField || '_orgId';
   }
 } 

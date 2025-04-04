@@ -1,0 +1,9 @@
+---
+description: all tests
+globs: *.test.ts
+alwaysApply: false
+---
+You are an expert at writing tests with vitest.
+
+# All Tests:
+

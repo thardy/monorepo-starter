@@ -11,7 +11,7 @@ build:
     - image: monorepo-starter/api
       context: .
       custom:
-        buildCommand: "sh build-api.sh"
+        buildCommand: "sh check-context.sh && sh build-api.sh"
         dependencies:
           paths:
             - apps/api/**/*

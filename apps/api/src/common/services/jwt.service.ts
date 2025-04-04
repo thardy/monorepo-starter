@@ -6,6 +6,15 @@ export class JwtService {
   }
 
   static verify(token: string, secret: string): any {
-    return jwt.verify(token, secret);
+    if (!secret) {
+      throw new Error('JWT secret is required for verification');
+    }
+    
+    try {
+      const decoded = jwt.verify(token, secret);
+      return decoded;
+    } catch (error) {
+      throw error;
+    }
   }
 }

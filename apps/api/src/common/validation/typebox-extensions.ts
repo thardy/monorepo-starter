@@ -28,46 +28,11 @@ export function TypeboxDate(options: object = {}) {
 
 // ObjectId transform utility functions
 export function TypeboxObjectId(options: object = {}) {
-  return Type.Transform(Type.String({ pattern: '^[0-9a-fA-F]{24}$', ...options }))
-    //.Decode(value => new ObjectId(value))
-    .Decode((value: any) => {
-      if (value === null || value === undefined) {
-        return value;
-      }
-      
-      // Case 1: Already an ObjectId instance - return as is
-      if (typeof value === 'object' && value?.toHexString && typeof value.toHexString === 'function') {
-        return value as ObjectId;
-      }
-      
-      // Case 2: Object with buffer property (raw object after Clean is done with it)
-      if (typeof value === 'object' && value !== null && value.buffer) {
-        return new ObjectId(value.buffer);
-      }
-      
-      // Case 3: String - convert to ObjectId
-      if (typeof value === 'string') {
-        return new ObjectId(value);
-      }
-      
-      // Case 4: Try toString() as a fallback (with error handling)
-      try {
-        if (value !== null && typeof value === 'object' && value.toString && typeof value.toString === 'function') {
-          const strValue = value.toString();
-          if (typeof strValue === 'string' && ObjectId.isValid(strValue)) {
-            return new ObjectId(strValue);
-          }
-        }
-      } catch (err) {
-        console.warn(`Failed to convert value to ObjectId:`, value);
-      }
-      
-      // Return original if nothing worked
-      return value;
-    })
-    .Encode((value: any) => value instanceof ObjectId ? value.toString() : 
-        typeof value === 'string' ? value :
-        value?.toString?.() || String(value));
+  return Type.Transform(Type.String({ pattern: '^[0-9a-fA-F]{24}$' }))
+  .Decode(value => new ObjectId(value))
+  .Encode(value => value instanceof ObjectId ? value.toString() : 
+      typeof value === 'string' ? value :
+      (value as any).toString());
 }
 
 // -----------------------------------------------------------------

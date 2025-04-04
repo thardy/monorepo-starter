@@ -5,12 +5,12 @@ import { entityUtils } from '../utils/entity.utils.js';
 
 export interface IUserContext {
   user: IUser;
-	orgId?: string; // todo: if the app is multi-tenant, orgId will be required - figure out how to make this happen
+	_orgId?: string;
 }
 
 export const EmptyUserContext: IUserContext = {
   user: {} as IUser,
-  orgId: undefined
+  _orgId: undefined
 }
 
 /**
@@ -19,7 +19,7 @@ export const EmptyUserContext: IUserContext = {
  */
 export const UserContextSchema = Type.Object({
   user: PublicUserSchema,
-  orgId: Type.Optional(Type.String())
+  _orgId: Type.Optional(Type.String())
 });
 
 /**

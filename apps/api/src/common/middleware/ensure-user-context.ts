@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { EmptyUserContext } from '../models/user-context.interface.js';
+import { EmptyUserContext } from '../models/user-context.model.js';
 
 /**
  * Middleware that ensures every request has a userContext.

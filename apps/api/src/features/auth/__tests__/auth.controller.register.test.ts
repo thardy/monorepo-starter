@@ -14,10 +14,10 @@ describe('AuthController', () => {
     const testUser = testUtils.existingUsers[0];
     const payload = { 
       user: { 
-        id: testUser.id,
+        _id: testUser.id,
         email: testUser.email
       }, 
-      orgId: testUtils.testOrgId 
+      _orgId: testUtils.testOrgId 
     };
     authToken = jwt.sign(
       payload,

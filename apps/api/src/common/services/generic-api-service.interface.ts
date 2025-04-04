@@ -1,6 +1,6 @@
 import {DeleteResult, Document, FindOptions} from 'mongodb';
-import {IUserContext} from '../models/user-context.interface.js';
-import {IEntity} from '../models/entity.interface.js';
+import {IUserContext} from '../models/user-context.model.js';
+import {IEntity} from '../models/entity.model.js';
 import {IPagedResult} from '../models/paged-result.interface.js';
 import {QueryOptions} from '../models/query-options.model.js';    
 

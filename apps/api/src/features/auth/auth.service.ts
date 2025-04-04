@@ -5,7 +5,7 @@ import crypto from 'crypto';
 
 import {BadRequestError, DuplicateKeyError, ServerError} from '#common/errors/index';
 import {JwtService, EmailService, GenericApiService} from '#common/services/index';
-import {IUserContext, IUser, EmptyUserContext, passwordValidator, UserSpec} from '#common/models/index';
+import {IUserContext, IUser, ITokenResponse, EmptyUserContext, passwordValidator, UserSpec} from '#common/models/index';
 import {conversionUtils, entityUtils, passwordUtils} from '#common/utils/index';
 
 import config from '#server/config/config';
@@ -111,7 +111,7 @@ export class AuthService extends GenericApiService<IUser> {
 		return user; // ignore the result of onAfterCreate and return what the original call returned
 	}
 
-	async requestTokenUsingRefreshToken(refreshToken: string, deviceId: string): Promise<TokenResponse | null> {
+	async requestTokenUsingRefreshToken(refreshToken: string, deviceId: string): Promise<ITokenResponse | null> {
 		// refreshToken - { token, deviceId, userId, expiresOn, created, createdBy, createdByIp, revoked?, revokedBy? }
 		//  not using revoked and revokedBy currently - I'm just deleting refreshTokens by userId and deviceId (there can be only one!!)
 		let userId = null;
@@ -187,11 +187,11 @@ export class AuthService extends GenericApiService<IUser> {
 			};  // orgId is the selectedOrg (the org of the user for any non-metaAdmins)
 			const accessToken = this.generateJwt(payload);
 			const accessTokenExpiresOn = this.getExpiresOnFromSeconds(config.auth.jwtExpirationInSeconds);
-			tokenResponse = new TokenResponse({
+			tokenResponse = {
 				accessToken,
 				refreshToken: createdRefreshTokenObject.token,
 				expiresOn: accessTokenExpiresOn
-			});
+			};
 		}
 		return tokenResponse;
 	}
@@ -299,9 +299,7 @@ export class AuthService extends GenericApiService<IUser> {
 
 		const accessToken = JwtService.sign(
 			payload,
-			// todo: fix this - either add it back or come up with a better way to handle passing config to api-common
-			//config.apiCommonConfig.clientSecret,
-			'secret',
+			config.apiCommonConfig.clientSecret,
 			{
 				expiresIn: jwtExpirationInSeconds
 			}

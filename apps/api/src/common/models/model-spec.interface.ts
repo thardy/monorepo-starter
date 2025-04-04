@@ -6,7 +6,7 @@ import { TypeCompiler } from '@sinclair/typebox/compiler';
  */
 export interface IModelSpec<T extends TSchema = TSchema> {
   /**
-   * The primary TypeBox schema for validating complete documents
+   * The primary TypeBox schema for validating all user-supplied properties
    */
   schema: T;
   
@@ -16,7 +16,7 @@ export interface IModelSpec<T extends TSchema = TSchema> {
   partialSchema: TSchema;
   
   /**
-   * Full version of the schema for validating complete documents
+   * Full version of the schema (user and system properties)for validating complete documents
    */
   fullSchema: T;
 

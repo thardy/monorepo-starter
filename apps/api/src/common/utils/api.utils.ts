@@ -28,7 +28,15 @@ function apiResponse<T>(
 		if (Array.isArray(options.data)) {
 			// For arrays, encode each item
 			options.data = options.data.map(item => modelSpec.encode(item, publicSchema)) as T;
-		} else {
+		} 
+		// Special handling for paged results (objects with 'entities' property)
+		else if (typeof options.data === 'object' && options.data !== null && 'entities' in options.data && Array.isArray((options.data as any).entities)) {
+			const pagedResult = options.data as any;
+			// Encode just the entities array, not the whole paged result
+			pagedResult.entities = pagedResult.entities.map((item: any) => modelSpec.encode(item, publicSchema));
+			options.data = pagedResult as T;
+		} 
+		else {
 			// For single entity
 			options.data = modelSpec.encode(options.data, publicSchema) as T;
 		}

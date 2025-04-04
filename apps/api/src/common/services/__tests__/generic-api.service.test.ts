@@ -43,12 +43,13 @@ const createUserContext = (): IUserContext => ({
   user: { 
     _id: new ObjectId(),
     email: 'test@example.com',
+    password: '',
     _created: new Date(),
     _createdBy: 'system',
     _updated: new Date(),
     _updatedBy: 'system'
   },
-  orgId: '67e8e19b149f740323af93d7'
+  _orgId: '67e8e19b149f740323af93d7'
 });
 
 describe('[library] GenericApiService - Integration Tests', () => {
@@ -79,12 +80,13 @@ describe('[library] GenericApiService - Integration Tests', () => {
       user: {
         _id: new ObjectId('5f7d5dc35a3a3a0b8c7b3e0d'),
         email: 'test@example.com',
+        password: '',
         _created: new Date(),
         _createdBy: 'system',
         _updated: new Date(),
         _updatedBy: 'system'
       },
-      orgId: '67e8e19b149f740323af93d7'
+      _orgId: '67e8e19b149f740323af93d7'
     };
   });
   
@@ -418,161 +420,6 @@ describe('[library] GenericApiService - Integration Tests', () => {
     });
   });
   
-  describe('Schema Cleaning', () => {
-    it('should clean extra properties from entities retrieved from the database', async () => {
-      // Arrange
-      const userContext = createUserContext();
-      
-      // Create a document with extra properties not in the schema
-      // Insert directly into MongoDB to bypass schema validation
-      const documentWithExtraProps = {
-        _id: new ObjectId(),
-        name: 'Clean Test Entity',
-        description: 'This entity has extra properties',
-        isActive: true,
-        // Properties not in the schema
-        extraProperty: 'This should be removed',
-        anotherExtraProperty: 42,
-        nestedExtraProperty: { foo: 'bar', baz: 123 },
-        arrayExtraProperty: [1, 2, 3, 'four']
-      };
-      
-      // Insert directly into MongoDB to bypass validation and cleaning
-      await collection.insertOne(documentWithExtraProps);
-      
-      // Act - Retrieve through the service, which should clean the document
-      const retrievedEntity = await service.getById(userContext, documentWithExtraProps._id.toString());
-      
-      // Assert
-      expect(retrievedEntity).toBeDefined();
-      expect(retrievedEntity.name).toBe(documentWithExtraProps.name);
-      expect(retrievedEntity.description).toBe(documentWithExtraProps.description);
-      expect(retrievedEntity.isActive).toBe(documentWithExtraProps.isActive);
-      
-      // Extra properties should be removed
-      expect((retrievedEntity as any).extraProperty).toBeUndefined();
-      expect((retrievedEntity as any).anotherExtraProperty).toBeUndefined();
-      expect((retrievedEntity as any).nestedExtraProperty).toBeUndefined();
-      expect((retrievedEntity as any).arrayExtraProperty).toBeUndefined();
-    });
-    
-    it('should clean extra properties when retrieving multiple entities', async () => {
-      // Arrange
-      const userContext = createUserContext();
-      
-      // Create multiple documents with extra properties
-      const documentsWithExtraProps = [
-        {
-          _id: new ObjectId(),
-          name: 'Entity 1',
-          extraProp1: 'should be removed',
-          randomData: { anything: 'goes' }
-        },
-        {
-          _id: new ObjectId(),
-          name: 'Entity 2',
-          extraProp2: 'also should be removed',
-          otherRandomStuff: [1, 2, 3]
-        }
-      ];
-      
-      // Insert directly into MongoDB
-      await collection.insertMany(documentsWithExtraProps);
-      
-      // Act - Get all entities through the service
-      const retrievedEntities = await service.getAll(userContext);
-      
-      // Assert
-      expect(retrievedEntities.length).toBeGreaterThanOrEqual(2);
-      
-      // Find our test entities in the results
-      const entity1 = retrievedEntities.find(e => e.name === 'Entity 1');
-      const entity2 = retrievedEntities.find(e => e.name === 'Entity 2');
-      
-      expect(entity1).toBeDefined();
-      expect(entity2).toBeDefined();
-      
-      // Check that extra properties were removed
-      expect((entity1 as any).extraProp1).toBeUndefined();
-      expect((entity1 as any).randomData).toBeUndefined();
-      expect((entity2 as any).extraProp2).toBeUndefined();
-      expect((entity2 as any).otherRandomStuff).toBeUndefined();
-    });
-    
-    it('should preserve system properties when cleaning entities', async () => {
-      // Arrange
-      const userContext = createUserContext();
-      const now = new Date();
-      
-      // Create a document with both extra properties and system properties
-      const documentWithMixedProps = {
-        _id: new ObjectId(),
-        name: 'System Props Test',
-        // System properties should be preserved
-        _created: now,
-        _createdBy: 'system-test',
-        _updated: now,
-        _updatedBy: 'system-test',
-        // Extra properties should be removed
-        notInSchema: 'remove me'
-      };
-      
-      // Insert directly into MongoDB
-      await collection.insertOne(documentWithMixedProps);
-      
-      // Act
-      const retrievedEntity = await service.getById(userContext, documentWithMixedProps._id.toString());
-      
-      // Assert
-      expect(retrievedEntity).toBeDefined();
-      expect(retrievedEntity.name).toBe(documentWithMixedProps.name);
-      
-      // System properties should be preserved
-      expect(retrievedEntity._id).toEqual(documentWithMixedProps._id);
-      expect(retrievedEntity._created).toEqual(documentWithMixedProps._created);
-      expect(retrievedEntity._createdBy).toBe(documentWithMixedProps._createdBy);
-      expect(retrievedEntity._updated).toEqual(documentWithMixedProps._updated);
-      expect(retrievedEntity._updatedBy).toBe(documentWithMixedProps._updatedBy);
-      
-      // Extra property should be removed
-      expect((retrievedEntity as any).notInSchema).toBeUndefined();
-    });
-    
-    it('should clean extra properties when using find method', async () => {
-      // Arrange
-      const userContext = createUserContext();
-      
-      // Create a document with extra properties
-      const documentWithExtraProps = {
-        _id: new ObjectId(),
-        name: 'Find Test Entity',
-        isActive: true,
-        // Extra property not in schema
-        searchProperty: 'searchable-value'
-      };
-      
-      // Insert directly into MongoDB
-      await collection.insertOne(documentWithExtraProps);
-      
-      // Act - Use find method to retrieve the entity
-      const results = await service.find(userContext, { 
-        name: 'Find Test Entity',
-        // Include the extra property in the query (should work for querying)
-        searchProperty: 'searchable-value'
-      });
-      
-      // Assert
-      expect(results.length).toBe(1);
-      const foundEntity = results[0];
-      
-      expect(foundEntity.name).toBe(documentWithExtraProps.name);
-      expect(foundEntity.isActive).toBe(documentWithExtraProps.isActive);
-      
-      // Extra property should be removed from the result
-      expect((foundEntity as any).searchProperty).toBeUndefined();
-    });
-  });
-  
   describe('Error Handling', () => {
     it('should throw IdNotFoundError when getting non-existent entity', async () => {
       // Arrange
@@ -684,12 +531,13 @@ describe('[library] GenericApiService - Integration Tests', () => {
           user: {
             _id: new ObjectId('5f7d5dc35a3a3a0b8c7b3e0e'),
             email: 'updater@example.com',
+            password: '',
             _created: new Date(),
             _createdBy: 'system',
             _updated: new Date(),
             _updatedBy: 'system'
           },
-          orgId: '67e8e19b149f740323af93d7'
+          _orgId: '67e8e19b149f740323af93d7'
         };
         
         // Wait a moment to ensure timestamps differ

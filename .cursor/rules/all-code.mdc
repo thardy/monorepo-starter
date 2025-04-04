@@ -1,0 +1,17 @@
+---
+description: rules for all code
+globs: *.ts
+alwaysApply: false
+---
+# Diagnostic Code Guidelines
+
+- For single console.log statements, add the comment at the end of the same line: `console.log('message'); // AI-generated diagnostic`
+- For blocks of diagnostic code, add the start/end comments on separate lines before and after the block:
+  ```
+  // AI-generated diagnostic - start
+  console.log('message1');
+  console.log('message2');
+  // AI-generated diagnostic - end
+  ```
+- Always clean up ALL diagnostic code when issue is resolved
+- Never modify core test functionality when adding diagnostics

@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import {IUserContext} from '../models/user-context.interface.js';
+import {IUserContext} from '../models/user-context.model.js';
 import {UnauthenticatedError} from '../errors/index.js';
 import {JwtService} from '../services/index.js';
-// todo: apiCommonConfig - fix here too
-//import {config} from '../config/index.js';
+import {config} from '../config/index.js';
 
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   let token = null;
@@ -19,9 +18,7 @@ export const isAuthenticated = (req: Request, res: Response, next: NextFunction)
 
   if (token) {
     try {
-      // todo: apiCommonConfig - fix here too!!!!!!
-      //const payload = JwtService.verify(token, config.clientSecret) as IUserContext;
-      const payload = JwtService.verify(token, 'secret') as IUserContext;
+      const payload = JwtService.verify(token, config.clientSecret) as IUserContext;
       req.userContext = payload;
       next();
     }

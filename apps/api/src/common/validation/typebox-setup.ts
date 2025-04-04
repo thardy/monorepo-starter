@@ -36,8 +36,6 @@ export const initializeTypeBox = () => {
   FormatRegistry.Set('date-time', value => IsDateTime(value));
   FormatRegistry.Set('date', value => IsDate(value));
   FormatRegistry.Set('email', value => IsEmail(value));
-  
-  console.log('TypeBox custom validations initialized');
 }; 
 
 

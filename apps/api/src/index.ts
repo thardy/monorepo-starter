@@ -44,7 +44,7 @@ const startServer = async () => {
 	  // });
     externalServer = externalApp.listen(config.externalPort, () => {
       console.log(`risk-answers-api (external) listening on port ${config.externalPort} (inside k8s cluster). env = (${config.env})!!!`);
-      console.log(`k8s ingress maps external to ${config.hostName}/api!!! You should have ${config.hostName} mapped in your hosts file to 127.0.0.1.`);
+      console.log(`k8s ingress maps external to \x1b[32m${config.hostName}/api\x1b[0m!!! You should have ${config.hostName} mapped in your hosts file to 127.0.0.1.`);
     });
   }
   else {

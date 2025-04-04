@@ -21,12 +21,13 @@ describe('[library] TenantQueryDecorator', () => {
     user: { 
       _id: new ObjectId(), 
       email: 'test@example.com',
+      password: '',
       _created: new Date(),
       _createdBy: 'system',
       _updated: new Date(),
       _updatedBy: 'system'
     },
-    ...(includeOrgId ? { orgId } : {})
+    ...(includeOrgId ? { _orgId:orgId } : {})
   });
   
   const collectionName = 'testCollection';
@@ -83,7 +84,7 @@ describe('[library] TenantQueryDecorator', () => {
       // Assert
       expect(result).toEqual({
         name: 'Test',
-        orgId: orgId
+        _orgId: orgId
       });
     });
     
@@ -145,7 +146,7 @@ describe('[library] TenantQueryDecorator', () => {
       // Assert
       expect(result.filters).toEqual({
         name: { eq: 'Test' },
-        orgId: { eq: orgId }
+        _orgId: { eq: orgId }
       });
     });
     
@@ -204,7 +205,7 @@ describe('[library] TenantQueryDecorator', () => {
       
       // Assert
       expect(result.filters).toEqual({
-        orgId: { eq: orgId }
+        _orgId: { eq: orgId }
       });
     });
   });
@@ -223,7 +224,7 @@ describe('[library] TenantQueryDecorator', () => {
       expect(result).toEqual({
         _id: newId,
         name: 'Test Entity',
-        orgId: orgId
+        _orgId: orgId
       });
     });
     
@@ -279,17 +280,17 @@ describe('[library] TenantQueryDecorator', () => {
       // Arrange
       const newId = new ObjectId();
       const decorator = new TenantQueryDecorator();
-      const entity: TestEntity & { orgId: string } = { 
+      const entity: TestEntity & { _orgId: string } = { 
         _id: newId,
         name: 'Test Entity',
-        orgId: 'old-org-id'
+        _orgId: 'old-org-id'
       };
       
       // Act
       const result = decorator.applyTenantToEntity(createUserContext(), entity, collectionName);
       
       // Assert
-      expect(result.orgId).toBe(orgId);
+      expect(result._orgId).toBe(orgId);
     });
   });
   
@@ -299,7 +300,7 @@ describe('[library] TenantQueryDecorator', () => {
       const decorator = new TenantQueryDecorator();
       
       // Act & Assert
-      expect(decorator.getOrgIdField()).toBe('orgId');
+      expect(decorator.getOrgIdField()).toBe('_orgId');
     });
     
     it('should return custom orgId field name when specified', () => {

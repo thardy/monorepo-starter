@@ -93,7 +93,7 @@ export abstract class ApiController<T extends IEntity> {
 		// Extract query options from request
 		const queryOptions = apiUtils.getQueryOptionsFromRequest(req);
 
-		// Get paged result from service
+    // Get paged result from service
 		const pagedResult = await this.service.get(req.userContext!, queryOptions);
 		
 		// Prepare API response

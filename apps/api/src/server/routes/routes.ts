@@ -6,6 +6,7 @@ import path from 'path';
 import config from '#server/config/config';
 import {isAuthenticated} from '#common/middleware/is-authenticated';
 import {AuthController} from '#features/auth/auth.controller';
+import {OrganizationsController} from '#features/organizations/organizations.controller';
 import {ProductsController} from '#features/products/products.controller';
 import {UsersController} from '#features/users/users.controller';
 // *** end of imports [buildit marker] ***
@@ -48,6 +49,7 @@ export default function(app: Application, db: Db) {
 
 	// each controller has a 'mapRoutes' function that adds its routes to the express app
 	const authController = new AuthController(app, db);
+	const organizationsController = new OrganizationsController(app, db);
 	const productsController = new ProductsController(app, db);
 	const usersController = new UsersController(app, db);
 	// *** end of routes [buildit marker] ***

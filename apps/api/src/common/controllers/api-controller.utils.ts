@@ -14,12 +14,12 @@
 // function getAll(req: Request, res: Response, next: NextFunction): Promise<T[]> {
 //     res.set("Content-Type", "application/json");
 //
-//     this.service.getAll(req.context.orgId)
+//     this.service.getAll(req.context._orgId)
 //         .then((docs) => {
 //             return res.status(200).json(docs);
 //         })
 //         .catch(err => {
-//             err.message = `ERROR: ${this.resourceName}Controller -> getAll(${req.context.orgId}) - ${err.message}`;
+//             err.message = `ERROR: ${this.resourceName}Controller -> getAll(${req.context._orgId}) - ${err.message}`;
 //             return next(err);
 //         });
 //

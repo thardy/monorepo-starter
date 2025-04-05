@@ -9,13 +9,37 @@ data:
       pwd: "testuser",
       roles: [{ role: "readWrite", db: "monorepoStarter" }]
     });
+    const orgResult = db.organizations.insertOne({
+      "name": "Monorepo Starter Corp",
+      "code": "mono",
+      "description": "the meta org",
+      "status": 1,
+      "isMetaOrg": true,
+      "_created": new ISODate(),
+      "_createdBy": "system",
+      "_updated": new ISODate(),
+      "_updatedBy": "system"
+    });
+    const orgId = orgResult.insertedId;
+    db.users.insertOne({
+      "email": "test@test.com",
+      "password": "test1234",
+      "firstName": "Test",
+      "lastName": "McTesty",
+      "_orgId": orgId
+    });
   mongo-init.js: |
     // mongo-init.js
     //
     //
+    // ***** organizations ****************************************
+    db.createCollection('organizations', {});
+    // Case-insensitive indexes
+    db.organizations.createIndex({ "name": 1 }, { unique: true, collation: { locale: 'en', strength: 1 }});
+    db.organizations.createIndex({ "code": 1 }, { unique: true, collation: { locale: 'en', strength: 1 }});
+    
     // ***** products ****************************************
     db.createCollection('products', {});
-    
     
     // ***** users ****************************************
     db.createCollection('users', {});

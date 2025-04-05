@@ -70,7 +70,7 @@ export class AuthService extends GenericApiService<IUser> {
 
 	async createUser(userContext: IUserContext, user: IUser): Promise<IUser> {
 		// You currently don't have to be logged-in to create a user - we'll need to vette exactly what you do need based on the scenario.
-		// todo: validate that the user.orgId exists - think through the whole user creation process
+		// todo: validate that the user._orgId exists - think through the whole user creation process
 		//  I think a user either has to be created by someone with the authorization to do so, or they need to be
 		//  joining an org that has open registration, or else they have some sort of invite to join an org,
 		//  or initialSetup is occurring.
@@ -180,11 +180,11 @@ export class AuthService extends GenericApiService<IUser> {
 			//  to get a new accessToken because we are hard-coding it to the user's org right here.
 			//  We'll need to find a way to have the client tell us what the selectedOrg should be when they
 			//  call requestTokenUsingRefreshToken() - AND we'll need to VALIDATE that they can select that org
-			//  if (selectedOrgId !== user.orgId) then user.isMetaAdmin must be true.
+			//  if (selectedOrgId !== user._orgIdorgId) then user.isMetaAdmin must be true.
 			const payload = {
 				user: user, 
-				orgId: user.orgId ? String(user.orgId) : undefined
-			};  // orgId is the selectedOrg (the org of the user for any non-metaAdmins)
+				_orgId: user._orgId ? String(user._orgId) : undefined
+			};  // _orgId is the selectedOrg (the org of the user for any non-metaAdmins)
 			const accessToken = this.generateJwt(payload);
 			const accessTokenExpiresOn = this.getExpiresOnFromSeconds(config.auth.jwtExpirationInSeconds);
 			tokenResponse = {
@@ -289,8 +289,8 @@ export class AuthService extends GenericApiService<IUser> {
 
 	generateJwt(payload: any) {
 		// Ensure orgId is a string before signing to prevent type inconsistencies when deserializing
-		if (payload.orgId !== undefined) {
-			payload.orgId = String(payload.orgId);
+		if (payload._orgId !== undefined) {
+			payload._orgId = String(payload._orgId);
 		}
 		
 		// generate the jwt (uses jsonwebtoken library)

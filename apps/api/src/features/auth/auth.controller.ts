@@ -41,8 +41,7 @@ export class AuthController {
   }
 
   async login(req: Request, res: Response, next: NextFunction) {
-    //console.log(`entering login()`); // todo: delete me
-		const { email, password } = req.body;
+    const { email, password } = req.body;
     res.set('Content-Type', 'application/json');
 
 		const lowerCaseEmail = email.toLowerCase();
@@ -60,7 +59,7 @@ export class AuthController {
     // this is now handled completely by passing a public schema to apiUtils.apiResponse
     // const cleanUser = User.clean(user);
     
-    const userContext = { user: user, orgId: user._orgId };
+    const userContext = { user: user, _orgId: user._orgId };
     
     const deviceId = this.authService.getAndSetDeviceIdCookie(req, res);
 		//console.log(`In authController. deviceId: ${deviceId}`); // todo: delete me

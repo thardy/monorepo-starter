@@ -66,6 +66,8 @@ describe('[library] ApiController with MultiTenantApiService', () => {
     app = testSetup.app;
     db = testSetup.db;
     testAgent = testSetup.agent;
+
+    await CommonTestUtils.setupTestUser();
     
     // Get auth token and user ID from CommonTestUtils
     authToken = CommonTestUtils.getAuthToken();
@@ -74,32 +76,31 @@ describe('[library] ApiController with MultiTenantApiService', () => {
     // Create service and controller instances
     tenantItemController = new TestTenantItemController(app, db);
     tenantItemService = tenantItemController.testTenantItemService;
+
+    await TestExpressApp.setupErrorHandling(); // needs to come after all controllers are created
   });
 
   afterAll(async () => {
+    //await CommonTestUtils.deleteTestUser(); // clearCollections handles all data
+    await TestExpressApp.clearCollections();
     await TestExpressApp.cleanup();
   });
 
   beforeEach(async () => {
-    // Clear collections before each test
-    await TestExpressApp.clearCollections();
+    
   });
 
   // todo: to make this fail (change _orgId back to orgId in auth.controller line 62), and change the test to ACTUALLY call login endpoint first
   //  then use the token that comes back to make the next get request
   describe('proper handling of userContext', () => {
     it('should succeed with valid userContext containing orgId', async () => {
-      // Create a test item first
-      await testAgent
-        .post('/api/test-tenant-items')
-        .set('Authorization', authToken)
-        .send({ name: 'Test Tenant Item', value: 42 })
-        .expect(201);
-      
+      const authorizationHeaderValue = await CommonTestUtils.simulateloginWithTestUser();
+
+      console.log(`authorizationHeaderValue = ${authorizationHeaderValue}`); // todo: delete me
       // This should succeed because the authToken from CommonTestUtils includes orgId
       const response = await testAgent
         .get('/api/test-tenant-items')
-        .set('Authorization', authToken);
+        .set('Authorization', authorizationHeaderValue);
       
       // Test passes if the request succeeds (no error about missing orgId)
       expect(response.status).toBe(200);

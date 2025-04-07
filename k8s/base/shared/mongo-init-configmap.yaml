@@ -20,14 +20,6 @@ data:
       "_updated": new ISODate(),
       "_updatedBy": "system"
     });
-    const orgId = orgResult.insertedId;
-    db.users.insertOne({
-      "email": "test@test.com",
-      "password": "test1234",
-      "firstName": "Test",
-      "lastName": "McTesty",
-      "_orgId": orgId
-    });
   mongo-init.js: |
     // mongo-init.js
     //

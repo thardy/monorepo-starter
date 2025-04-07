@@ -89,6 +89,7 @@ export abstract class ApiController<T extends IEntity> {
 
 	async get(req: Request, res: Response, next: NextFunction) {
 		res.set('Content-Type', 'application/json');
+    console.log(`ApiController.get called with userContext = ${JSON.stringify(req.userContext)}`); // todo: delete me
 		
 		// Extract query options from request
 		const queryOptions = apiUtils.getQueryOptionsFromRequest(req);

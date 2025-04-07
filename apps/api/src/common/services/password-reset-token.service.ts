@@ -1,9 +1,8 @@
 import {Db, ObjectId} from 'mongodb';
 import crypto from 'crypto';
 import moment from 'moment';
-import {GenericApiService} from '#common/services/index';
-import {EmptyUserContext} from '#common/models/index';
-import {IPasswordResetToken, PasswordResetTokenSpec} from './password-reset-token.interface.js';
+import {GenericApiService} from './generic-api.service.js';
+import {EmptyUserContext, IPasswordResetToken, PasswordResetTokenSpec} from '../models/index.js';
 
 export class PasswordResetTokenService extends GenericApiService<IPasswordResetToken> {
 	constructor(db: Db) {

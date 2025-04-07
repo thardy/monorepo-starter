@@ -1,6 +1,6 @@
-import {IEntity, IAuditable} from '#common/models/index';
-import { entityUtils } from '#root/src/common/utils/index';
 import { Type } from '@sinclair/typebox';
+import {IEntity, IAuditable} from './index.js';
+import { entityUtils } from '../utils/index.js';
 
 export interface IPasswordResetToken extends IEntity, IAuditable {
 	email: string;

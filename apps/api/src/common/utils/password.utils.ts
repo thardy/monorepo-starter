@@ -11,9 +11,17 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function comparePasswords(storedPassword: string, suppliedPassword: string): Promise<boolean> {
-  const [hashedPassword, salt] = storedPassword.split('.');
-  const buf = (await scryptAsync(suppliedPassword, salt, 64)) as Buffer;
+  // Basic validation to prevent errors with undefined passwords
+  if (!storedPassword || !storedPassword.includes('.')) {
+    return false; // Invalid format, can't compare
+  }
 
+  const [hashedPassword, salt] = storedPassword.split('.');
+  if (!salt) {
+    return false; // No salt found
+  }
+
+  const buf = (await scryptAsync(suppliedPassword, salt, 64)) as Buffer;
   return buf.toString('hex') === hashedPassword;
 }
 

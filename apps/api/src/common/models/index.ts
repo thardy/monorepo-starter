@@ -10,6 +10,7 @@ export * from './login-response.model.js';
 export * from './model-spec.interface.js';
 export * from './organization.model.js';
 export * from './paged-result.interface.js';
+export * from './password-reset-token.interface.js';
 export * from './query-options.model.js';
 export * from './token-response.model.js';
 export * from './types/index.js';

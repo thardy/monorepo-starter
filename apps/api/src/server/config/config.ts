@@ -15,17 +15,17 @@ const loadConfig = (): IApiConfig => {
     corsAllowedOrigins,
     saltWorkFactor: parseInt(process.env.SALT_WORK_FACTOR ?? '10', 10),
     jobTypes: process.env.JOB_TYPES,
-    auth: {
-      jwtExpirationInSeconds: parseInt(process.env.JWT_EXPIRATION_SECONDS ?? '3600', 10),
-      refreshTokenExpirationInDays: parseInt(process.env.REFRESH_EXPIRATION_DAYS ?? '7', 10),
-      deviceIdCookieMaxAgeInDays: parseInt(process.env.DEVICEID_MAX_AGE_DAYS ?? '730', 10),
-      passwordResetTokenExpirationInMinutes: parseInt(process.env.PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES ?? '20', 10),
-    },
     apiCommonConfig: {
       clientSecret: process.env.CLIENT_SECRET!,
       app: {
         // all of these app configs should be hardcoded here and not changed from environment to environment
         multiTenant: true
+      },
+      auth: {
+        jwtExpirationInSeconds: parseInt(process.env.JWT_EXPIRATION_SECONDS ?? '3600', 10),
+        refreshTokenExpirationInDays: parseInt(process.env.REFRESH_EXPIRATION_DAYS ?? '7', 10),
+        deviceIdCookieMaxAgeInDays: parseInt(process.env.DEVICEID_MAX_AGE_DAYS ?? '730', 10),
+        passwordResetTokenExpirationInMinutes: parseInt(process.env.PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES ?? '20', 10),
       },
       email: {
         sendGridApiKey: process.env.EMAIL_SENDGRID_API_KEY,

@@ -93,7 +93,7 @@ export class TenantQueryDecorator {
     else if (!userContext?._orgId) {
       throw new ServerError('No _orgId found in userContext');
     }
-    
+
     return result;
   }
 

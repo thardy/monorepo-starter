@@ -7,6 +7,12 @@ export interface IApiCommonConfig {
   app: {
     multiTenant: boolean;
   },
+  auth: {
+    jwtExpirationInSeconds: number;
+    refreshTokenExpirationInDays: number;
+    deviceIdCookieMaxAgeInDays: number;
+    passwordResetTokenExpirationInMinutes: number;
+  },
   email: {
     sendGridApiKey?: string;
     fromAddress?: string;

@@ -7,6 +7,7 @@ import { CommonTestUtils } from './common-test.utils.js';
 import { config as apiCommonConfig } from '../../config/index.js';
 import { setApiCommonConfig } from '../../config/api-common-config.js';
 import { initializeTypeBox } from '../../validation/typebox-setup.js';
+import 'express-async-errors'; // This package helps Express catch async errors
 
 /**
  * Utility class for setting up a minimal Express application for testing
@@ -35,6 +36,12 @@ export class TestExpressApp {
     setApiCommonConfig({
       clientSecret: 'test-secret',
       app: { multiTenant: true },
+      auth: {
+        jwtExpirationInSeconds: 3600,
+        refreshTokenExpirationInDays: 7,
+        deviceIdCookieMaxAgeInDays: 730,
+        passwordResetTokenExpirationInMinutes: 20
+      },
       email: {
         // These can be empty/undefined in tests as specified by the interface
         sendGridApiKey: undefined,
@@ -48,6 +55,7 @@ export class TestExpressApp {
       const uri = this.mongoServer.getUri();
       this.client = await MongoClient.connect(uri);
       this.db = this.client.db();
+      CommonTestUtils.initialize(this.db);
     }
     
     // Set up Express app if not already done
@@ -59,15 +67,6 @@ export class TestExpressApp {
       this.app.use((req, res, next) => {
         next();
       });
-      
-      // Add error handling middleware
-      this.app.use((err: any, req: any, res: any, next: any) => {
-        res.status(err.status || 500).json({
-          success: false,
-          message: err.message,
-          stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-        });
-      });
     }
     
     // Create a supertest agent for making test requests
@@ -78,6 +77,19 @@ export class TestExpressApp {
       db: this.db,
       agent
     };
+  }
+
+  // this isn't like what we do in the actual app. If we need it to be just like it, we'll need to pull some of that code out
+  //  into a common function and use it here.
+  static async setupErrorHandling(): Promise<void> {
+    // Add error handling middleware
+    this.app.use((err: any, req: any, res: any, next: any) => {
+      res.status(err.status || 500).json({
+        success: false,
+        message: err.message,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      });
+    });
   }
   
   /**

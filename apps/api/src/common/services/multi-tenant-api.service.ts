@@ -42,7 +42,9 @@ export class MultiTenantApiService<T extends IEntity> extends GenericApiService<
    * Override the query options preparation hook to add tenant filtering
    */
   protected override prepareQueryOptions(userContext: IUserContext, queryOptions: QueryOptions): QueryOptions {
+    console.log(`MultiTenantApiService.prepareQueryOptions called with userContext = ${JSON.stringify(userContext)} and queryOptions = ${JSON.stringify(queryOptions)}`); // todo: delete me
     if (!userContext || !userContext._orgId) {
+      console.log(`MultiTenantApiService.prepareQueryOptions throwing error because userContext is invalid`); // todo: delete me
       throw new BadRequestError('A valid userContext was not provided to MultiTenantApiService.prepareQueryOptions');
     }
     

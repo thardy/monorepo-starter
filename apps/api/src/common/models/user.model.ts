@@ -54,7 +54,7 @@ export const UserSchema = Type.Object({
 });
 
 // Create the model spec first
-export const UserSpec = entityUtils.getModelSpec(UserSchema, { isAuditable: true });
+export const UserSpec = entityUtils.getModelSpec(UserSchema, { isAuditable: true }); // I don't think isMultiTenant is being used anywhere - consider removing
 
 // Then create the public schema by omitting the password from the full schema
 export const PublicUserSchema = Type.Omit(UserSpec.fullSchema, ['password']);

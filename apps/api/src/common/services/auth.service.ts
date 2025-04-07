@@ -1,15 +1,16 @@
-import {Db, InsertOneResult, AnyError, ObjectId, Collection} from 'mongodb';
+import {Db, InsertOneResult, AnyError, ObjectId, Collection, UpdateResult} from 'mongodb';
 import {Request, Response} from 'express';
 import moment from 'moment';
 import crypto from 'crypto';
 
-import {BadRequestError, DuplicateKeyError, ServerError} from '#common/errors/index';
-import {JwtService, EmailService, GenericApiService} from '#common/services/index';
-import {IUserContext, IUser, ITokenResponse, EmptyUserContext, passwordValidator, UserSpec} from '#common/models/index';
-import {conversionUtils, entityUtils, passwordUtils} from '#common/utils/index';
+import {BadRequestError, DuplicateKeyError, ServerError} from '../errors/index.js';
+import {JwtService, EmailService} from './index.js';
+import {GenericApiService} from './generic-api.service.js';
+import {PasswordResetTokenService} from './password-reset-token.service.js';
+import {IUserContext, IUser, ITokenResponse, EmptyUserContext, passwordValidator, UserSpec, ILoginResponse} from '../models/index.js';
+import {conversionUtils, entityUtils, passwordUtils} from '../utils/index.js';
 
-import config from '#server/config/config';
-import {PasswordResetTokenService} from '#features/auth/password-reset-token.service';
+import {config} from '../config/index.js';
 
 export class AuthService extends GenericApiService<IUser> {
 	private refreshTokensCollection: Collection;
@@ -24,10 +25,36 @@ export class AuthService extends GenericApiService<IUser> {
 		this.emailService = new EmailService();
 	}
 
+	async attemptLogin(req: Request, res: Response, email: string, password: string): Promise<ILoginResponse | null> {
+		const lowerCaseEmail = email.toLowerCase();
+		const user = await this.getUserByEmail(lowerCaseEmail);
+		
+		// Basic validation to prevent errors with undefined user
+		if (!user) {
+			throw new BadRequestError('Invalid Credentials');
+		}
+
+		const passwordsMatch = await passwordUtils.comparePasswords(user.password!, password);
+		if (!passwordsMatch) {
+			throw new BadRequestError('Invalid Credentials');
+		}
+
+		const userContext = { 
+			user: user, 
+			_orgId: user._orgId 
+		};
+
+		const deviceId = this.getAndSetDeviceIdCookie(req, res);
+		const loginResponse = await this.logUserIn(userContext, deviceId);
+		return loginResponse;
+	}
+	
 	async logUserIn(userContext: IUserContext, deviceId: string) {
 		const payload = userContext;
 		const accessToken = this.generateJwt(payload);
-		// upon login, we want to create a new refreshToken with a full expiresOn expiration
+		// upon login, we want to create a new refreshToken with a full expiresOn expiration. If the client is capable of finding an unexpired refreshToken
+		//  persisted locally, it can use that to request a new accessToken - it should NOT try to log in again. Every time there's a successful cred swap, 
+		//  we start with a brand new refreshToken.
 		const refreshTokenObject = await this.createNewRefreshToken(userContext.user._id!.toString(), deviceId);
 		const accessTokenExpiresOn = this.getExpiresOnFromSeconds(config.auth.jwtExpirationInSeconds);
 
@@ -39,9 +66,10 @@ export class AuthService extends GenericApiService<IUser> {
 				expiresOn: accessTokenExpiresOn
 			};
 
-
-			// todo: save new lastLoggedIn date (non-blocking) - use an event or async call that we don't wait for
-			//this.authService.updateLastLoggedIn(user);
+			// Update lastLoggedIn in a non-blocking way
+			this.updateLastLoggedIn(userContext.user._id!.toString())
+				.catch(err => console.log(`Error updating lastLoggedIn: ${err}`));
+			
 			this.transformSingle(userContext.user);
 			loginResponse = {tokens: tokenResponse, userContext };
 		}
@@ -50,11 +78,11 @@ export class AuthService extends GenericApiService<IUser> {
 	}
 
 	getUserById(id: string) {
-    if (!entityUtils.isValidObjectId(id)) {
-      throw new BadRequestError('id is not a valid ObjectId');
-    }
+		if (!entityUtils.isValidObjectId(id)) {
+			throw new BadRequestError('id is not a valid ObjectId');
+		}
 
-		// todo: remove all these direct collection calls and use the GenericApiService methods instead!!!!!
+		// todo: remove all these direct collection calls and use the GenericApiService methods instead!!!!!!!!!
 		return this.collection.findOne({_id: new ObjectId(id)})
 			.then((doc) => {
 				return doc;
@@ -111,33 +139,60 @@ export class AuthService extends GenericApiService<IUser> {
 		return user; // ignore the result of onAfterCreate and return what the original call returned
 	}
 
-	async requestTokenUsingRefreshToken(refreshToken: string, deviceId: string): Promise<ITokenResponse | null> {
-		// refreshToken - { token, deviceId, userId, expiresOn, created, createdBy, createdByIp, revoked?, revokedBy? }
-		//  not using revoked and revokedBy currently - I'm just deleting refreshTokens by userId and deviceId (there can be only one!!)
-		let userId = null;
+	async requestTokenUsingRefreshToken(req: Request): Promise<ITokenResponse | null> {
+		const refreshToken = req.query.refreshToken;
+		const deviceId = this.getDeviceIdFromCookie(req);
+		//console.log(`deviceId: ${deviceId}`); // todo: delete me
+		let tokens: ITokenResponse | null = null;
 
-		// look for this particular refreshToken in our database. refreshTokens are assigned to deviceIds,
-		//  so they can only be retrieved together.
-		const activeRefreshToken = await this.getActiveRefreshToken(refreshToken, deviceId);
-		console.log(`activeRefreshToken: ${activeRefreshToken}`); // todo: delete me
-		let newTokens = null;
-		if (activeRefreshToken) {
-			userId = activeRefreshToken.userId;
+		if (refreshToken && typeof refreshToken === 'string' && deviceId) {
+			let userId = null;
 
-			if (userId) {
-				// we found an activeRefreshToken, and we know what user it was assigned to
-				//  - create a new refreshToken and persist it to the database
-				// upon refresh, we want to create a new refreshToken maintaining the existing expiresOn expiration
-				//newRefreshTokenPromise = this.createNewRefreshToken(userId, deviceId, activeRefreshToken.expiresOn);
-				newTokens = await this.createNewTokens(userId, deviceId, activeRefreshToken.expiresOn);
+			// look for this particular refreshToken in our database. refreshTokens are assigned to deviceIds,
+			//  so they can only be retrieved together.
+			const activeRefreshToken = await this.getActiveRefreshToken(refreshToken, deviceId);
+			console.log(`activeRefreshToken: ${activeRefreshToken}`); // todo: delete me
+			if (activeRefreshToken) {
+				userId = activeRefreshToken.userId;
+
+				if (userId) {
+					// we found an activeRefreshToken, and we know what user it was assigned to
+					//  - create a new refreshToken and persist it to the database
+					// upon refresh, we want to create a new refreshToken maintaining the existing expiresOn expiration
+					tokens = await this.createNewTokens(userId, deviceId, activeRefreshToken.expiresOn);
+				}
 			}
 		}
-
-		return newTokens;
+		return tokens;
 	}
 
+	// async requestTokenUsingRefreshToken(refreshToken: string, deviceId: string): Promise<ITokenResponse | null> {
+	// 	// refreshToken - { token, deviceId, userId, expiresOn, created, createdBy, createdByIp, revoked?, revokedBy? }
+	// 	//  not using revoked and revokedBy currently - I'm just deleting refreshTokens by userId and deviceId (there can be only one!!)
+	// 	let userId = null;
+
+	// 	// look for this particular refreshToken in our database. refreshTokens are assigned to deviceIds,
+	// 	//  so they can only be retrieved together.
+	// 	const activeRefreshToken = await this.getActiveRefreshToken(refreshToken, deviceId);
+	// 	console.log(`activeRefreshToken: ${activeRefreshToken}`); // todo: delete me
+	// 	let newTokens = null;
+	// 	if (activeRefreshToken) {
+	// 		userId = activeRefreshToken.userId;
+
+	// 		if (userId) {
+	// 			// we found an activeRefreshToken, and we know what user it was assigned to
+	// 			//  - create a new refreshToken and persist it to the database
+	// 			// upon refresh, we want to create a new refreshToken maintaining the existing expiresOn expiration
+	// 			//newRefreshTokenPromise = this.createNewRefreshToken(userId, deviceId, activeRefreshToken.expiresOn);
+	// 			newTokens = await this.createNewTokens(userId, deviceId, activeRefreshToken.expiresOn);
+	// 		}
+	// 	}
+
+	// 	return newTokens;
+	// }
+
 	async changeLoggedInUsersPassword(userContext: IUserContext, body: any) {
-    const validationResult = entityUtils.validate(passwordValidator, { password: body.password });
+		const validationResult = entityUtils.validate(passwordValidator, { password: body.password });
 		entityUtils.handleValidationResult(validationResult, 'AuthService.changePassword');
 
 		const queryObject = {_id: new ObjectId(userContext.user._id!)};
@@ -145,7 +200,7 @@ export class AuthService extends GenericApiService<IUser> {
 		return result;
 	}
 
-	async changePassword(userContext: IUserContext, queryObject: any, password: string) {
+	async changePassword(userContext: IUserContext, queryObject: any, password: string): Promise<UpdateResult> {
 		// queryObject will either be {_id: someUserId} for loggedInUser change or {email: someEmail} from forgotPassword
 		const hashedPassword = await passwordUtils.hashPassword(password);
 		const updates = { password: hashedPassword, lastPasswordChange: moment().utc().toDate() };
@@ -165,6 +220,7 @@ export class AuthService extends GenericApiService<IUser> {
 	async createNewTokens(userId: string, deviceId: string, refreshTokenExpiresOn: number) {
 		let createdRefreshTokenObject: any = null;
 
+		// todo: do we really need to create a new refreshToken? Can we just let the original one expire and create a new one at that time?
 		const newRefreshToken = await this.createNewRefreshToken(userId, deviceId, refreshTokenExpiresOn);
 		let user = null;
 		if (newRefreshToken) {
@@ -258,7 +314,7 @@ export class AuthService extends GenericApiService<IUser> {
 		await this.emailService.sendHtmlEmail(emailAddress, `Reset Password for ${config.appName}`, htmlEmailBody);
 	}
 
-	async resetPassword(email: string, passwordResetToken: string, password: string) {
+	async resetPassword(email: string, passwordResetToken: string, password: string): Promise<UpdateResult> {
 		// fetch passwordResetToken
 		const retrievedPasswordResetToken = await this.passwordResetTokenService.getByEmail(email);
 		
@@ -277,6 +333,7 @@ export class AuthService extends GenericApiService<IUser> {
 		console.log(`password changed using forgot-password for email: ${email}`);
 
 		// delete passwordResetToken
+		// todo: should we await here? I think we should not. The user successfully changed their password regardless of what happens to the resetToken
 		await this.passwordResetTokenService.deleteById(EmptyUserContext, retrievedPasswordResetToken._id.toString());
 		console.log(`passwordResetToken deleted for email: ${email}`);
 
@@ -299,7 +356,7 @@ export class AuthService extends GenericApiService<IUser> {
 
 		const accessToken = JwtService.sign(
 			payload,
-			config.apiCommonConfig.clientSecret,
+			config.clientSecret,
 			{
 				expiresIn: jwtExpirationInSeconds
 			}
@@ -375,6 +432,27 @@ export class AuthService extends GenericApiService<IUser> {
 
 	override transformSingle(user: IUser) {
 		return super.transformSingle(user);
+	}
+
+	/**
+	 * Updates the user's lastLoggedIn date to the current time
+	 * This is designed to be called in a non-blocking way
+	 * @param userId The ID of the user to update
+	 */
+	private async updateLastLoggedIn(userId: string): Promise<void> {
+		try {
+			if (!entityUtils.isValidObjectId(userId)) {
+				throw new BadRequestError('userId is not a valid ObjectId');
+			}
+
+			const queryObject = {_id: new ObjectId(userId)};
+			const updates = { lastLoggedIn: moment().utc().toDate() };
+			
+			await this.collection.updateOne(queryObject, {$set: updates});
+		} catch (error) {
+			// Log error but don't throw to ensure non-blocking behavior
+			console.log(`Failed to update lastLoggedIn for user ${userId}: ${error}`);
+		}
 	}
 
 }

@@ -12,11 +12,5 @@ export interface IBaseApiConfig {
   saltWorkFactor?: number;
   jobTypes?: string;
   deployedBranch?: string;
-  auth: {
-    jwtExpirationInSeconds: number;
-    refreshTokenExpirationInDays: number;
-    deviceIdCookieMaxAgeInDays: number;
-    passwordResetTokenExpirationInMinutes: number;
-  };
   apiCommonConfig: IApiCommonConfig;
 }

@@ -1,5 +1,5 @@
-export interface ResetPasswordRequest {
-	email: string;
-	token: string;
-	password: string;
-}
+// export interface ResetPasswordRequest {
+// 	email: string;
+// 	token: string;
+// 	password: string;
+// }

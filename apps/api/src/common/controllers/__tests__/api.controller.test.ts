@@ -116,6 +116,8 @@ describe('[library] ApiController - Integration Tests', () => {
     // Create user service and controller
     usersController = new TestUserController(app, db);
     userService = usersController.testUserService;
+
+    await TestExpressApp.setupErrorHandling(); // needs to come after all controllers are created
   });
 
   afterAll(async () => {

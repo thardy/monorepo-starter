@@ -1,12 +1,14 @@
 ---
-description: rules for all code
+description: rules for all diagnostic logs and code
 globs: *.ts
 alwaysApply: false
 ---
 # Diagnostic Code Guidelines
 
-- For single console.log statements, add the comment at the end of the same line: `console.log('message'); // AI-generated diagnostic`
-- For blocks of diagnostic code, add the start/end comments on separate lines before and after the block:
+- Only mark temporary debugging code with the diagnostic comment
+- Permanent error logging or system monitoring logs should NOT be marked as diagnostic
+- For single, temporary diagnostic console.log statements, add the comment at the end of the same line: `console.log('message'); // AI-generated diagnostic`
+- For blocks of temporary diagnostic code, add the start/end comments on separate lines before and after the block:
   ```
   // AI-generated diagnostic - start
   console.log('message1');
@@ -15,3 +17,13 @@ alwaysApply: false
   ```
 - Always clean up ALL diagnostic code when issue is resolved
 - Never modify core test functionality when adding diagnostics
+
+## When to mark code as diagnostic:
+- Temporary logs added to debug an issue that will be removed once the issue is fixed
+- Test outputs that are not meant to be permanent
+- Temporary variable dumps or state inspections
+
+## When NOT to mark code as diagnostic:
+- Error handling logs that should remain in the codebase
+- Production monitoring and logging code
+- Exception tracking or reporting

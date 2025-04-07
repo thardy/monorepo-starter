@@ -114,9 +114,11 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
   }
 
   async get(userContext: IUserContext, queryOptions: QueryOptions = new QueryOptions()): Promise<IPagedResult<T>> {
+    console.log(`GenericApiService.get called with userContext = ${JSON.stringify(userContext)} and queryOptions = ${JSON.stringify(queryOptions)}`); // todo: delete me
     // Apply query options preparation hook
     const preparedOptions = this.prepareQueryOptions(userContext, queryOptions);
 
+    console.log(`preparedOptions = ${JSON.stringify(preparedOptions)}`); // todo: delete me
     // Construct the query object
     // this is supposed to be the fastest way to perform a query AND get the total documents count in MongoDb
     const match = dbUtils.buildMongoMatchFromQueryOptions(preparedOptions);
@@ -145,8 +147,11 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
       }
     ];
 
+    console.log(`pipeline = ${JSON.stringify(pipeline)}`); // todo: delete me
     let pagedResult: IPagedResult<T> = apiUtils.getPagedResult<T>([], 0, preparedOptions);
-    const aggregateResult = await this.collection.aggregate(pipeline).next();
+    const cursor = this.collection.aggregate(pipeline);
+    const aggregateResult = await cursor.next();
+    console.log(`aggregateResult = ${JSON.stringify(aggregateResult)}`); // todo: delete me
     if (aggregateResult) {
       let total = 0;
       if (aggregateResult.total && aggregateResult.total.length > 0) {
@@ -154,7 +159,9 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
         total = aggregateResult.total[0].total;
       }
       const entities = this.transformList(aggregateResult.results);
+      console.log(`entities = ${JSON.stringify(entities)}`); // todo: delete me
       pagedResult = apiUtils.getPagedResult<T>(entities, total, preparedOptions);
+      console.log(`pagedResult = ${JSON.stringify(pagedResult)}`); // todo: delete me
     }
     return pagedResult;
   }
@@ -205,7 +212,7 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
       const insertResult = await this.collection.insertOne(preparedEntity);
 
       if (insertResult.insertedId) {
-        // mongoDb mutates the entity passed into insertOne to have an _id property - we rename it to "id" in transformSingle
+        // mongoDb mutates the entity passed into insertOne to have an _id property
         createdEntity = this.transformSingle(preparedEntity);
       }
 

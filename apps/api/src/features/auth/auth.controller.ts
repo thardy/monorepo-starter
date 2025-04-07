@@ -16,7 +16,7 @@ import {
   UserContextSpec
 } from '#common/models/index';
 
-import {AuthService} from './auth.service.js';
+import {AuthService} from '#common/services/index';
 import { config } from '#root/src/common/config/index';
 
 export class AuthController {
@@ -44,32 +44,8 @@ export class AuthController {
     const { email, password } = req.body;
     res.set('Content-Type', 'application/json');
 
-		const lowerCaseEmail = email.toLowerCase();
-    const user = await this.authService.getUserByEmail(lowerCaseEmail);
-    if (!user) {
-      throw new BadRequestError('Invalid Credentials');
-    }
-
-    const passwordsMatch = await passwordUtils.comparePasswords(user.password!, password);
-    if (!passwordsMatch) {
-      throw new BadRequestError('Invalid Credentials');
-    }
-
-	  // Now that we have compared the password, let's clean the user, so we don't send the password anywhere
-    // this is now handled completely by passing a public schema to apiUtils.apiResponse
-    // const cleanUser = User.clean(user);
-    
-    const userContext = { user: user, _orgId: user._orgId };
-    
-    const deviceId = this.authService.getAndSetDeviceIdCookie(req, res);
-		//console.log(`In authController. deviceId: ${deviceId}`); // todo: delete me
-    const loginResponse = await this.authService.logUserIn(userContext, deviceId);
-		//console.log(`loginResponse: ${JSON.stringify(loginResponse)}`); // todo: delete me
-
-		// const status = 200;
-		// const apiResponse = apiUtils.apiResponse<LoginResponse>(status, loginResponse);
-    // return res.status(status).json(apiResponse);
-	  return apiUtils.apiResponse<ILoginResponse | null>(res, 200, {data: loginResponse}, LoginResponseSpec);
+		const loginResponse = await this.authService.attemptLogin(req, res, email, password);
+		return apiUtils.apiResponse<ILoginResponse | null>(res, 200, {data: loginResponse}, LoginResponseSpec);
   }
 
   async registerUser(req: Request, res: Response) {
@@ -84,14 +60,7 @@ export class AuthController {
   }
 
   async requestTokenUsingRefreshToken(req: Request, res: Response, next: NextFunction) {
-    const refreshToken = req.query.refreshToken;
-    const deviceId = this.authService.getDeviceIdFromCookie(req);
-		console.log(`deviceId: ${deviceId}`); // todo: delete me
-    let tokens: ITokenResponse | null = null;
-
-    if (refreshToken && typeof refreshToken === 'string') {
-      tokens = await this.authService.requestTokenUsingRefreshToken(refreshToken, deviceId);
-    }
+    let tokens: ITokenResponse | null = await this.authService.requestTokenUsingRefreshToken(req);
 
     if (tokens) {
       //return res.status(200).json(tokens);

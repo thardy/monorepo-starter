@@ -3,6 +3,14 @@ import {stringUtils} from './string.utils.js';
 import {ObjectId} from 'mongodb';
 import {entityUtils} from './entity.utils.js';
 
+// todo: split this into separate files based on db (mongo, sql, etc)
+
+/**
+ * List of property names that should not be converted to ObjectIds, even if they end with 'Id'
+ * These properties are meant to be stored and queried as strings
+ */
+export const PROPERTIES_THAT_ARE_NOT_OBJECT_IDS = ['_orgId'];
+
 /**
  * Convert our custom filter format to a Mongoose query
  */
@@ -66,7 +74,9 @@ function buildMongoMatchFromQueryOptions(queryOptions: IQueryOptions) {
 	for (const [key, value] of Object.entries(filters)) {
 		if (value) {
 			if (value.eq !== undefined) {
-				if (typeof value.eq === 'string' && key.endsWith('Id') && entityUtils.isValidObjectId(value.eq)) {
+				//if (!ignoredProperties.includes(key) && key.endsWith('Id') && doc[key]) {
+				if (typeof value.eq === 'string' && !PROPERTIES_THAT_ARE_NOT_OBJECT_IDS.includes(key) 
+					&& key.endsWith('Id') && entityUtils.isValidObjectId(value.eq)) {
 					match[key] = new ObjectId(value.eq)
 				}
 				else {

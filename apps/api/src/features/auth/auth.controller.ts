@@ -50,7 +50,6 @@ export class AuthController {
 
   async registerUser(req: Request, res: Response) {
     const userContext = req.userContext;
-    console.log(`userContext: ${JSON.stringify(userContext)}`); // todo: delete me
     const body = req.body;
 
     // we're not handling errors here anymore because createUser throws errors and middleware handles them

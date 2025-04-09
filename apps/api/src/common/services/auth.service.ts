@@ -119,8 +119,8 @@ export class AuthService extends GenericApiService<IUser> {
 			user.roles = ["user"];
 		}
 
-		await this.onBeforeCreate(userContext, user);
-
+		user = await this.onBeforeCreate(userContext, user);
+		
 		try {
 			const insertResult = await this.collection.insertOne(user);
 
@@ -203,9 +203,9 @@ export class AuthService extends GenericApiService<IUser> {
 	async changePassword(userContext: IUserContext, queryObject: any, password: string): Promise<UpdateResult> {
 		// queryObject will either be {_id: someUserId} for loggedInUser change or {email: someEmail} from forgotPassword
 		const hashedPassword = await passwordUtils.hashPassword(password);
-		const updates = { password: hashedPassword, lastPasswordChange: moment().utc().toDate() };
+		let updates = { password: hashedPassword, lastPasswordChange: moment().utc().toDate() };
 
-		await this.onBeforeUpdate(userContext, updates);
+		updates = await this.onBeforeUpdate(userContext, updates);
 		
 		const mongoUpdateResult = await this.collection.updateOne(queryObject, {$set: updates});
 

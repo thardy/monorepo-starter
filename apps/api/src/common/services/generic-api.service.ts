@@ -614,7 +614,6 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
     if (this.modelSpec) {
       // Use type assertion to handle potential unknown return type
       const cleanedEntity = this.modelSpec.decode(preparedEntity); // as T | Partial<T>
-      
       return cleanedEntity;
     }
 

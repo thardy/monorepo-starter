@@ -96,7 +96,6 @@ describe('[library] ApiController with MultiTenantApiService', () => {
     it('should succeed with valid userContext containing orgId', async () => {
       const authorizationHeaderValue = await CommonTestUtils.simulateloginWithTestUser();
 
-      console.log(`authorizationHeaderValue = ${authorizationHeaderValue}`); // todo: delete me
       // This should succeed because the authToken from CommonTestUtils includes orgId
       const response = await testAgent
         .get('/api/test-tenant-items')

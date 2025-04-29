@@ -17,16 +17,27 @@ beforeAll(async () => {
   try {
     // Initialize API common config with mock values for testing
     setApiCommonConfig({
+      env: 'test',
+      hostName: 'localhost',
+      appName: 'test-app',
       clientSecret: 'test-secret',
-      app: {
-        multiTenant: true
+      debug: {
+        showErrors: false
+      },
+      app: { multiTenant: true },
+      auth: {
+        jwtExpirationInSeconds: 3600,
+        refreshTokenExpirationInDays: 7,
+        deviceIdCookieMaxAgeInDays: 730,
+        passwordResetTokenExpirationInMinutes: 20
       },
       email: {
-        sendGridApiKey: 'mock-api-key',
-        fromAddress: 'test@example.com'
+        // These can be empty/undefined in tests as specified by the interface
+        sendGridApiKey: undefined,
+        fromAddress: undefined
       }
     });
-
+    
     mongo = await MongoMemoryServer.create({
       instance: {
         port: 27017 + Math.floor(Math.random() * 1000), // Use a random port in safe range

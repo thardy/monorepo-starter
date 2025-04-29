@@ -28,11 +28,11 @@ export function TypeboxDate(options: object = {}) {
 
 // ObjectId transform utility functions
 export function TypeboxObjectId(options: object = {}) {
-  return Type.Transform(Type.String({ pattern: '^[0-9a-fA-F]{24}$' }))
-  .Decode(value => new ObjectId(value))
-  .Encode(value => value instanceof ObjectId ? value.toString() : 
-      typeof value === 'string' ? value :
-      (value as any).toString());
+  // Use string with objectid format instead of transform
+  return Type.String({ 
+    format: 'objectid',
+    ...options 
+  });
 }
 
 // -----------------------------------------------------------------

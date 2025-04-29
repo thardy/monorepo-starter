@@ -16,9 +16,9 @@ export class UserService extends MultiTenantApiService<IUser> {
 	}
 
 	// Moved entity manipulation from onBeforeUpdate to prepareEntity
-	protected override prepareEntity(userContext: IUserContext, entity: IUser, isCreate: boolean): IUser | Partial<IUser> {
+	protected override async prepareEntity(userContext: IUserContext, entity: IUser, isCreate: boolean): Promise<IUser | Partial<IUser>> {
 		// First, let the base class do its preparation
-		const preparedEntity = super.prepareEntity(userContext, entity, isCreate);
+		const preparedEntity = await super.prepareEntity(userContext, entity, isCreate);
 		
 		// Only clean the User object during updates, not during creation. If we want to actually update the password, we need to use 
 		//  a specific, explicit endpoint - /auth/change-password

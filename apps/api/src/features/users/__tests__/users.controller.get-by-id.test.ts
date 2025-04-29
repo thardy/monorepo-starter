@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { externalApp } from '#root/external-app';
 import testUtils from '#test/test.utils';
@@ -17,6 +18,7 @@ describe('AuthController', () => {
 
 		it('should not return any sensitive information for a user', async () => {
 			const authorizationHeaderValue = await testApiUtils.loginWithTestUser();
+			
 			const response = await request(externalApp)
 				.get(apiEndpoint)
 				.set('Authorization', authorizationHeaderValue)

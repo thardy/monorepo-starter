@@ -14,6 +14,7 @@ function initialize(theApp: Application) {
 }
 
 async function loginWithTestUser() {
+  // todo: not getting a valid UserContext (problem is either here or in the login function in auth.service.ts)
   // Create agent to maintain cookies
   const agent = request.agent(app);
   

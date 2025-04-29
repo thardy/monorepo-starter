@@ -56,6 +56,7 @@ function getModelSpec<T extends TSchema>(
   const fullValidator = getValidator(fullSchema);
   
   // encode receives an entity and converts all properties into their json types (like going from date to iso string)
+  // but we don't want to convert ObjectIds since we're now using string IDs
   const encode = <E>(entity: E, overrideSchema?: TSchema): E => {
     if (entity === null || entity === undefined) {
       return entity;
@@ -64,17 +65,20 @@ function getModelSpec<T extends TSchema>(
     // Use the override schema if provided, otherwise use the fullSchema
     const schemaToUse = overrideSchema || fullSchema;
     
-    // Have to call encode before clean because clean can't handle class instances (like ObjectId)
+    // Convert to JSON-safe format and clean properties not in schema
+    // Note: This will now keep string IDs as strings
     return Value.Parse(['Encode', 'Clean'], schemaToUse, entity) as never;
   }
 
   // decode receives json and converts all properties into their correct types (like going from iso string to date)
+  // but we'll keep string IDs as strings
   const decode = <E>(entity: E): E => {
     if (entity === null || entity === undefined) {
       return entity;
     }
     
-    // We are not using the Assert step here because we are not using these for validation - we use the validators for that
+    // Process the entity through TypeBox's pipeline
+    // Note: Since our schema now defines IDs as strings, this will keep them as strings
     return Value.Parse(['Clean', 'Default', 'Convert', 'Decode'], fullSchema, entity) as never;
   }
   
@@ -143,7 +147,7 @@ function isValidObjectId(id: any) {
 		console.log(`typeof id = ${typeof id}`);
 		console.log('id = ', id);
 	}
-	return result;
+  return result;
 }
 
 // function convertForeignKeysToObjectIds(doc: any, ignoredProperties: string[] = PROPERTIES_THAT_ARE_NOT_OBJECT_IDS) {

@@ -10,7 +10,7 @@ import { MultiTenantApiService } from '../../services/multi-tenant-api.service.j
 
 // Import our test utilities
 import { TestExpressApp } from '../../__tests__/setup/test-express-app.js';
-import { CommonTestUtils } from '../../__tests__/setup/common-test.utils.js';
+import testUtils from '../../__tests__/setup/common-test.utils.js';
 
 // Test entity for MultiTenantApiService
 interface ITestTenantItem extends IEntity, IAuditable {
@@ -67,11 +67,11 @@ describe('[library] ApiController with MultiTenantApiService', () => {
     db = testSetup.db;
     testAgent = testSetup.agent;
 
-    await CommonTestUtils.setupTestUser();
+    await testUtils.setupTestUser();
     
-    // Get auth token and user ID from CommonTestUtils
-    authToken = CommonTestUtils.getAuthToken();
-    userId = CommonTestUtils.getUserId();
+    // Get auth token and user ID from testUtils
+    authToken = testUtils.getAuthToken();
+    userId = testUtils.testUserId;
     
     // Create service and controller instances
     tenantItemController = new TestTenantItemController(app, db);
@@ -81,7 +81,6 @@ describe('[library] ApiController with MultiTenantApiService', () => {
   });
 
   afterAll(async () => {
-    //await CommonTestUtils.deleteTestUser(); // clearCollections handles all data
     await TestExpressApp.clearCollections();
     await TestExpressApp.cleanup();
   });
@@ -94,9 +93,9 @@ describe('[library] ApiController with MultiTenantApiService', () => {
   //  then use the token that comes back to make the next get request
   describe('proper handling of userContext', () => {
     it('should succeed with valid userContext containing orgId', async () => {
-      const authorizationHeaderValue = await CommonTestUtils.simulateloginWithTestUser();
+      const authorizationHeaderValue = await testUtils.simulateloginWithTestUser();
 
-      // This should succeed because the authToken from CommonTestUtils includes orgId
+      // This should succeed because the authToken from testUtils includes orgId
       const response = await testAgent
         .get('/api/test-tenant-items')
         .set('Authorization', authorizationHeaderValue);

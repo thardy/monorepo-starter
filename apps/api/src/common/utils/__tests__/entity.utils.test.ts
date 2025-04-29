@@ -43,21 +43,21 @@ describe('entityUtils', () => {
       expect((encodedEntity as any).nestedExtraProperty).toBeUndefined();
     });
     
-    it('should convert ObjectId instances to strings', () => {
+    it('should keep string IDs as strings', () => {
       // Create an entity with an ObjectId
-      const originalId = new ObjectId();
+      const originalIdString = new ObjectId().toString();
       const entity = { 
-        _id: originalId,
+        _id: originalIdString,
         name: 'Test with ObjectId' 
       };
       
       // Encode the entity using the model spec
       const encodedEntity = testSpec.encode(entity);
       
-      // Assert that the _id field is now a string representation of the ObjectId
+      // Assert that the _id field is a string
       expect(encodedEntity._id).toBeDefined();
       expect(typeof encodedEntity._id).toBe('string');
-      expect(encodedEntity._id).toBe(originalId.toString());
+      expect(encodedEntity._id).toBe(originalIdString);
     });
     
     it('should preserve system properties from the EntitySchema', () => {
@@ -170,7 +170,7 @@ describe('entityUtils', () => {
     // Create a model spec with the decode method
     const testSpec = entityUtils.getModelSpec(TestSchema, { isAuditable: true });
     
-    it('should convert string IDs to ObjectId instances', () => {
+    it('should keep string IDs as strings when decoded for database operations', () => {
       // Create an entity with a string ID
       const idString = '507f1f77bcf86cd799439011';
       const entity = { 
@@ -181,10 +181,10 @@ describe('entityUtils', () => {
       // Decode the entity using the model spec
       const decodedEntity = testSpec.decode(entity);
       
-      // Assert that the _id field is now an ObjectId
+      // Assert that the _id field remains a string
       expect(decodedEntity._id).toBeDefined();
-      expect((decodedEntity._id as any) instanceof ObjectId).toBe(true);
-      expect((decodedEntity._id as any).toString()).toBe(idString);
+      expect(typeof decodedEntity._id).toBe('string');
+      expect(decodedEntity._id).toBe(idString);
     });
     
     it('should convert string dates to Date objects', () => {

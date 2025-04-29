@@ -9,6 +9,7 @@ import { IsDate } from './formats/date.js'
 import './typebox-extensions.js';
 import { Value } from '@sinclair/typebox/value';
 import { IsEmail } from './formats/email.js';
+import { IsObjectId } from './formats/objectid.js';
 
 
 // Custom objectId validator function
@@ -32,7 +33,7 @@ export const initializeTypeBox = () => {
   SetErrorFunction(customSetErrorFunction);
   
   // Register custom format validators
-  // FormatRegistry.Set('objectId', isValidObjectId); // currently just using actual ObjectId types instead of strings with format: 'objectId'
+  FormatRegistry.Set('objectid', value => IsObjectId(value));
   FormatRegistry.Set('date-time', value => IsDateTime(value));
   FormatRegistry.Set('date', value => IsDate(value));
   FormatRegistry.Set('email', value => IsEmail(value));

@@ -10,6 +10,7 @@ let collections: any = {};
 
 // const testUserId = '5af51f4cf6dd9aae8deaeffa';
 let testUserId: string = '';
+const testOrgId = '67e8e19b149f740323af93d7';
 const testUserEmail = 'test@test.com';
 const testUserEmailCaseInsensitive = 'tesT@test.com';
 const testUserPassword = 'test';
@@ -30,11 +31,7 @@ function initialize(database: Db) {
   collections = {
     organizations: db.collection('organizations'),
     users: db.collection('users'),
-    clients: db.collection('clients'),
-    customData: db.collection('customData'),
-    customSchemas: db.collection('customSchemas'),
-    sites: db.collection('sites'),
-    templates: db.collection('templates')
+    clients: db.collection('clients')
   };
 }
 
@@ -68,11 +65,10 @@ async function createTestUsers() {
     const hashedAndSaltedUpdateUserPassword = await passwordUtils.hashPassword(updateUserPassword);
     
     // Create a test organization if it doesn't exist
-    const testOrgId = 'test-org-id';
-    const existingOrg = await collections.organizations.findOne({ id: testOrgId });
+    const existingOrg = await collections.organizations.findOne({ _id: new ObjectId(testOrgId) });
     if (!existingOrg) {
       await collections.organizations.insertOne({ 
-        id: testOrgId, 
+        _id: new ObjectId(testOrgId), 
         name: 'Test Organization',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -83,14 +79,14 @@ async function createTestUsers() {
     testUsers.push({
       email: testUserEmail, 
       password: hashedAndSaltedTestUserPassword,
-      orgId: testOrgId
+      _orgId: testOrgId
     });
     testUsers.push({
       email: updateUserEmail, 
       password: hashedAndSaltedUpdateUserPassword, 
       firstName: updateUserFirstName, 
       lastName: updateUserLastName,
-      orgId: testOrgId
+      _orgId: testOrgId
     });
 
     const insertResults = await Promise.all([
@@ -98,16 +94,13 @@ async function createTestUsers() {
     ]);
     testUtils.existingUsers = testUsers;
     
-    // Store the test org ID for later use
-    testUtils.testOrgId = testOrgId;
-
     if (insertResults[0]?.insertedIds) {
       // _.forEach(testUtils.existingUsers, (item: any) => {
       //   entityUtils.useFriendlyId(item);
       //   entityUtils.removeMongoId(item);
       // });
-      testUtils.testUserId = testUtils.existingUsers[0]?.id;
-      testUtils.updateUserId = testUtils.existingUsers[1]?.id;
+      testUtils.testUserId = testUtils.existingUsers[0]?._id;
+      testUtils.updateUserId = testUtils.existingUsers[1]?._id;
     }
     return testUtils.existingUsers;
   }
@@ -120,7 +113,7 @@ async function createTestUsers() {
 function deleteAllTestUsers() {
   let promise = Promise.resolve(null);
   if (testUtils.existingUsers.length > 0) {
-    promise = collections.users.deleteOne({_id: testUtils.existingUsers[0].id});
+    promise = collections.users.deleteOne({_id: testUtils.existingUsers[0]?._id});
   }
   return promise;
 }
@@ -142,12 +135,12 @@ async function createTestClients() {
 		testClients.push({
 			appliedId: testClient1AppliedId, 
 			location: {lat: 10, lng: 20},
-			orgId: testUtils.testOrgId
+			_orgId: testUtils.testOrgId
 		});
 		testClients.push({
 			appliedId: testClient2AppliedId, 
 			location: {lat: 100, lng: 200},
-			orgId: testUtils.testOrgId
+			_orgId: testUtils.testOrgId
 		});
 
 		const insertResults = await collections.clients.insertMany(testClients);
@@ -159,8 +152,8 @@ async function createTestClients() {
 			// 	entityUtils.useFriendlyId(item);
 			// 	entityUtils.removeMongoId(item);
 			// });
-			testClient1Id = testUtils.existingClients[0]?.id;
-			testClient2Id = testUtils.existingClients[1]?.id;
+			testClient1Id = testUtils.existingClients[0]?._id;
+			testClient2Id = testUtils.existingClients[1]?._id;
 		}
 		return testUtils.existingClients;
 	}
@@ -173,7 +166,7 @@ async function createTestClients() {
 function deleteAllTestClients() {
 	let promise = Promise.resolve(null);
 	if (testUtils.existingClients.length > 0) {
-		promise = collections.clients.deleteOne({_id: testUtils.existingClients[0].id});
+		promise = collections.clients.deleteOne({_id: testUtils.existingClients[0]?._id});
 	}
 	return promise;
 }
@@ -192,7 +185,7 @@ const testUtils = {
 	testClient1AppliedId,
 	testClient2Id,
 	testClient2AppliedId,
-	testOrgId: '',
+	testOrgId,
   existingProducts: [],
   existingDifferentProducts: [],
   existingSchemas: [],

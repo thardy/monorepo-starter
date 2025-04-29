@@ -16,11 +16,11 @@ const startServer = async () => {
   first.initialize();  // Call initialize to load environment variables
   
   console.log(`Starting api server on ${new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })}...`);
-  console.log(`config.env is set to: "${config.env}"`);
+  console.log(`config.api.env is set to: "${config.api.env}"`);
 
   // ensure we have all required config values
   checkForRequiredConfigValues();
-  setApiCommonConfig(config.apiCommonConfig);
+  setApiCommonConfig(config.api);
 	
   try {
     mongoClient = new MongoClient(`${config.mongoDbUrl}/${config.databaseName}`);
@@ -40,11 +40,11 @@ const startServer = async () => {
 
   if (db) {
     // internalServer = internalApp.listen(config.internalPort, () => {
-		//   console.log(`risk-answers-api (internal) listening on port ${config.internalPort} (inside k8s cluster). env = (${config.env})!!!`);
+		//   console.log(`risk-answers-api (internal) listening on port ${config.internalPort} (inside k8s cluster). env = (${config.api.env})!!!`);
 	  // });
     externalServer = externalApp.listen(config.externalPort, () => {
-      console.log(`risk-answers-api (external) listening on port ${config.externalPort} (inside k8s cluster). env = (${config.env})!!!`);
-      console.log(`k8s ingress maps external to \x1b[32m${config.hostName}/api\x1b[0m!!! You should have ${config.hostName} mapped in your hosts file to 127.0.0.1.`);
+      console.log(`risk-answers-api (external) listening on port ${config.externalPort} (inside k8s cluster). env = (${config.api.env})!!!`);
+      console.log(`k8s ingress maps external to \x1b[32m${config.api.hostName}/api\x1b[0m!!! You should have ${config.api.hostName} mapped in your hosts file to 127.0.0.1.`);
     });
   }
   else {
@@ -55,7 +55,7 @@ const startServer = async () => {
 
 const checkForRequiredConfigValues = () => {
   // todo: add all required config values to this check
-  //if (!config.apiCommonConfig.clientSecret) { throw new Error('config.commonConfig.clientSecret is not defined'); }
+  //if (!config.api.clientSecret) { throw new Error('config.commonConfig.clientSecret is not defined'); }
 }
 
 const cleanup = (event: any) => {

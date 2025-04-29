@@ -45,17 +45,17 @@ export class AuthController {
     res.set('Content-Type', 'application/json');
 
 		const loginResponse = await this.authService.attemptLogin(req, res, email, password);
-		return apiUtils.apiResponse<ILoginResponse | null>(res, 200, {data: loginResponse}, LoginResponseSpec);
+    return apiUtils.apiResponse<ILoginResponse | null>(res, 200, {data: loginResponse}, LoginResponseSpec);
   }
 
   async registerUser(req: Request, res: Response) {
     const userContext = req.userContext;
     const body = req.body;
-
+    
     // we're not handling errors here anymore because createUser throws errors and middleware handles them
     const user = await this.authService.createUser(userContext!, body);
-
-    return apiUtils.apiResponse<IUser>(res, 201, {data: user}, UserSpec, PublicUserSchema);
+    
+    return apiUtils.apiResponse<IUser>(res, 201, {data: user || undefined}, UserSpec, PublicUserSchema);
   }
 
   async requestTokenUsingRefreshToken(req: Request, res: Response, next: NextFunction) {
@@ -73,8 +73,7 @@ export class AuthController {
   async getUserContext(req: Request, res: Response, next: NextFunction) {
     const userContext = req.userContext;
     const clientUserContext = {user: userContext!.user};
-    //return res.status(200).json(clientUserContext);
-	  return apiUtils.apiResponse<IUserContext>(res, 200, {data: clientUserContext}, UserContextSpec);
+    return apiUtils.apiResponse<IUserContext>(res, 200, {data: clientUserContext}, UserContextSpec);
   }
 
   afterAuth(req: Request, res: Response, loginResponse: any) {

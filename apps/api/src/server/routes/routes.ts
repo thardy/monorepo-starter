@@ -5,14 +5,14 @@ import path from 'path';
 
 import config from '#server/config/config';
 import {isAuthenticated} from '#common/middleware/is-authenticated';
-import {AuthController} from '#features/auth/auth.controller';
+import {AuthController} from '#common/controllers/auth.controller';
 import {OrganizationsController} from '#features/organizations/organizations.controller';
 import {ProductsController} from '#features/products/products.controller';
 import {UsersController} from '#features/users/users.controller';
 // *** end of imports [buildit marker] ***
 
 const getPackageJsonPath = () => {
-	const isTest = config.env === 'test';
+	const isTest = config.api.env === 'test';
 	const currentDir = path.dirname(new URL(import.meta.url).pathname);
 	// In test environment, use path from project root, otherwise use path relative to this file
 	const pathToPackageJson = isTest ? path.join(currentDir, '../../../api/package.json') : path.join(currentDir, '../../package.json');

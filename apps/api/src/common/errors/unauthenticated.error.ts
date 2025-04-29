@@ -5,7 +5,7 @@ export class UnauthenticatedError extends CustomError {
 
   constructor() {
     super('Unauthenticated');
-
+    
     Object.setPrototypeOf(this, UnauthenticatedError.prototype);
   }
 

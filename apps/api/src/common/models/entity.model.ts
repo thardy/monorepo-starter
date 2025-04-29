@@ -1,9 +1,8 @@
-import { ObjectId } from "mongodb";
 import { Type } from '@sinclair/typebox';
 import { TypeboxObjectId } from "../validation/index.js";
 
 export interface IEntity {
-  _id: ObjectId;
+  _id: string;
   _orgId?: string;
 }
 

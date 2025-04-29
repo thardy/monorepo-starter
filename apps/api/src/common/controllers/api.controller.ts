@@ -89,16 +89,13 @@ export abstract class ApiController<T extends IEntity> {
 
 	async get(req: Request, res: Response, next: NextFunction) {
 		res.set('Content-Type', 'application/json');
-    console.log(`in ApiController.get`); // todo: delete me
     
 		// Extract query options from request
 		const queryOptions = apiUtils.getQueryOptionsFromRequest(req);
-    console.log(`ApiController.get queryOptions:`, queryOptions); // todo: delete me
-
+    
     // Get paged result from service
 		const pagedResult = await this.service.get(req.userContext!, queryOptions);
-    console.log(`ApiController.get pagedResult:`, pagedResult); // todo: delete me
-		// Prepare API response
+    // Prepare API response
 		return apiUtils.apiResponse<IPagedResult<T>>(res, 200, { data: pagedResult }, this.modelSpec, this.publicSchema);
 	}
 

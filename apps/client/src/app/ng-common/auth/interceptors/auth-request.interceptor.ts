@@ -7,7 +7,6 @@ import {AuthService} from '../services/auth.service';
 import {BaseClientConfig} from '@app/ng-common/config/models/base-client-config.interface';
 
 export const authRequestInterceptor: HttpInterceptorFn = (req, next) => {
-  console.log('in authRequestInterceptor'); // todo: delete me
   const config = inject(BaseClientConfig);
   if (!config.auth.interceptorEnabled) {
     return next(req);
@@ -27,7 +26,6 @@ export const authRequestInterceptor: HttpInterceptorFn = (req, next) => {
       );
   }
 
-  console.log('calling next with modifiedRequest'); // todo: delete me
   return next(modifiedRequest);
 }
 

@@ -33,7 +33,7 @@ beforeAll(async () => {
       },
       email: {
         // These can be empty/undefined in tests as specified by the interface
-        sendGridApiKey: undefined,
+        sendGridApiKey: 'SG.WeDontHaveAKeyYet',
         fromAddress: undefined
       }
     });

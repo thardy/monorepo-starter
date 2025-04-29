@@ -217,7 +217,6 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
       }
     }
     catch (err: any) {
-      console.log(`error in GenericApiService.create - ${err.message}`);
       if (err.code === 11000) { // this is the MongoDb error code for duplicate key
         throw new DuplicateKeyError(`${this.singularResourceName} already exists`);
       }
@@ -259,7 +258,6 @@ export class GenericApiService<T extends IEntity> implements IGenericApiService<
         await this.onAfterCreate(userContext, createdEntities);
       }
       catch (err: any) {
-        console.log(`error in GenericApiService.createMany - ${err.message}`);
         if (err.code === 11000) {
           throw new DuplicateKeyError(`One or more ${this.pluralResourceName} already exist`);
         }

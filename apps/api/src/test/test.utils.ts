@@ -79,6 +79,7 @@ async function createTestUsers() {
     testUsers.push({
       email: testUserEmail, 
       password: hashedAndSaltedTestUserPassword,
+      roles: ['user'],
       _orgId: testOrgId
     });
     testUsers.push({
@@ -86,6 +87,7 @@ async function createTestUsers() {
       password: hashedAndSaltedUpdateUserPassword, 
       firstName: updateUserFirstName, 
       lastName: updateUserLastName,
+      roles: ['user'],
       _orgId: testOrgId
     });
 

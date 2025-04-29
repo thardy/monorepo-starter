@@ -120,7 +120,7 @@ export class AuthService extends GenericApiService<IUser> {
 			// look for this particular refreshToken in our database. refreshTokens are assigned to deviceIds,
 			//  so they can only be retrieved together.
 			const activeRefreshToken = await this.getActiveRefreshToken(refreshToken, deviceId);
-			console.log(`activeRefreshToken: ${activeRefreshToken}`); // todo: delete me
+			//console.log(`activeRefreshToken: ${activeRefreshToken}`); // todo: delete me
 			if (activeRefreshToken) {
 				userId = activeRefreshToken.userId;
 
@@ -378,7 +378,7 @@ export class AuthService extends GenericApiService<IUser> {
 	}
 
 	getDeviceIdFromCookie(req: Request) {
-		console.log(`req.cookies: ${JSON.stringify(req.cookies)}`); // todo: delete me
+		//console.log(`req.cookies: ${JSON.stringify(req.cookies)}`); // todo: delete me
 		return req.cookies['deviceId'];
 	}
 

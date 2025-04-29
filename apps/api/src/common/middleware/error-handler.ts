@@ -25,14 +25,11 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
 	}
 
 	if (err instanceof CustomError) {
-		console.log(`in errorHandler - err is a CustomError`); // todo: delete me
 		return apiUtils.apiResponse(res, err.statusCode, {
 			errors: err.serializeErrors()
 		});
 	}
 
-	console.log(`in errorHandler - err is not a CustomError`); // todo: delete me
-	console.log(`err:`, err); // todo: delete me
 	return apiUtils.apiResponse(res, 500, {
 		errors: [{ message: 'Server Error' }]
 	});

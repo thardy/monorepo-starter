@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { externalApp } from '#root/external-app';
 import testUtils from '#test/test.utils';
@@ -23,7 +24,7 @@ describe('ClientsController', () => {
 			const path = `${apiEndpoint}/${userId}`;
 			const updatedRole = 'admin';
 			const updatedUser = {
-				role: updatedRole
+				roles: [updatedRole]
 			};
 
 			const response = await request(externalApp)
@@ -32,7 +33,7 @@ describe('ClientsController', () => {
 				.send(updatedUser)
 				.expect(200);
 
-			expect(response.body?.data?.role).toEqual(updatedRole);
+			expect(response.body?.data?.roles).toEqual([updatedRole]);
 			expect(response.body?.data?.email).toEqual(testUtils.updateUserEmail); // because this is partial update, properties we did not provide should remain the same
 		});
 	});

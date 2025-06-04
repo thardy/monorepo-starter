@@ -1,10 +1,9 @@
 // import mongoose, { Schema, Document, Types, ObjectId } from 'mongoose';
 import { Type, Static } from '@sinclair/typebox';
-import { IAuditable } from '#root/src/common/models/auditable.model';
-import { IEntity } from '#common/models/index';
-import { entityUtils } from '#common/utils/index';
-import { TypeboxMoney } from '#common/validation/index';
-import { TypeboxIsoDate } from '#common/validation/index';
+import { IAuditable, IEntity, } from '@loomcore/common/models';
+import { entityUtils } from '@loomcore/common/utils';
+import { TypeboxMoney } from '@loomcore/common/validation';
+import { TypeboxIsoDate } from '@loomcore/common/validation';
 
 // TypeScript interface - this contains the product properties (name, description, price, quantity) and the entity and auditable properties
 export interface IProduct extends IEntity, IAuditable {

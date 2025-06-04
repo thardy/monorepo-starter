@@ -3,7 +3,7 @@ import _ from 'lodash';
 import moment from 'moment';
 
 import config from '#server/config/config';
-import { passwordUtils, entityUtils } from '#common/utils/index';
+import { passwordUtils } from '@loomcore/api/utils';
 
 let db: Db;
 let collections: any = {};

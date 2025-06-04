@@ -1,4 +1,4 @@
-import { IBaseApiConfig } from "../../common/models/base-api-config.interface.js";
+import { IBaseApiConfig } from "@loomcore/api/models";
 
 export interface IApiConfig extends IBaseApiConfig {
   /**

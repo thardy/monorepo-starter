@@ -4,8 +4,9 @@ import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
 import config from '#server/config/config';
 import testUtils from '#test/test.utils';
 import testApiUtils from '#test/test-api.utils';
-import { externalApp, setupExternalExpress } from '#root/external-app';
-import { setApiCommonConfig } from '#common/config/api-common-config';
+import {expressUtils} from '@loomcore/api/utils';
+import { setBaseApiConfig } from '@loomcore/api/config';
+import {setupRoutes} from '#server/routes/routes';
 
 let mongo: MongoMemoryServer;
 let mongoClient: MongoClient;
@@ -16,11 +17,19 @@ vi.setConfig({ testTimeout: 60000 });
 beforeAll(async () => {
   try {
     // Initialize API common config with mock values for testing
-    setApiCommonConfig({
+    setBaseApiConfig({
       env: 'test',
       hostName: 'localhost',
       appName: 'test-app',
       clientSecret: 'test-secret',
+      mongoDbUrl: '',
+      databaseName: '',
+      externalPort: 4000,
+      internalPort: 8083,
+      corsAllowedOrigins: ['*'],
+      saltWorkFactor: 10,
+      jobTypes: '',
+      deployedBranch: '',
       debug: {
         showErrors: false
       },
@@ -52,11 +61,11 @@ beforeAll(async () => {
     await testUtils.initialize(db);
     await testUtils.createIndexes(db);
     
-    // Initialize API utils with app
-    testApiUtils.initialize(externalApp);
-    
     // Setup express app
-    setupExternalExpress(db);
+    const externalApp = expressUtils.setupExpressApp(db, config, setupRoutes);
+
+    // Initialize API utils with app
+    testApiUtils.initialize(externalApp);    
   } catch (error) {
     console.error('Error in test setup:', error);
     throw error;

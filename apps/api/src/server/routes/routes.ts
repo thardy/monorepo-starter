@@ -2,17 +2,14 @@ import { Db } from 'mongodb';
 import {Application} from 'express';
 import fs from 'fs';
 import path from 'path';
+import { IBaseApiConfig } from '@loomcore/api/models';
 
-import config from '#server/config/config';
-import {isAuthenticated} from '#common/middleware/is-authenticated';
-import {AuthController} from '#common/controllers/auth.controller';
-import {OrganizationsController} from '#features/organizations/organizations.controller';
+import {AuthController, OrganizationsController, UsersController} from '@loomcore/api/controllers';
 import {ProductsController} from '#features/products/products.controller';
-import {UsersController} from '#features/users/users.controller';
 // *** end of imports [buildit marker] ***
 
-const getPackageJsonPath = () => {
-	const isTest = config.api.env === 'test';
+const getPackageJsonPath = (config: IBaseApiConfig) => {
+	const isTest = config.env === 'test';
 	const currentDir = path.dirname(new URL(import.meta.url).pathname);
 	// In test environment, use path from project root, otherwise use path relative to this file
 	const pathToPackageJson = isTest ? path.join(currentDir, '../../../api/package.json') : path.join(currentDir, '../../package.json');
@@ -20,7 +17,7 @@ const getPackageJsonPath = () => {
 	return pathToPackageJson;
 };
 
-export default function(app: Application, db: Db) {
+export function setupRoutes(app: Application, db: Db, config: IBaseApiConfig): void {
 	// add endpoint for k8s health check
 	app.get(`/api/health`, async (req: any, res: any) => { res.status(200).send('OK'); })
 
@@ -28,16 +25,16 @@ export default function(app: Application, db: Db) {
 	//app.get('/api/diagnostics', isAuthenticated, (req, res) => {
 	app.get('/api/diagnostics', (req, res) => {
 		try {
-			const packageJsonPath = getPackageJsonPath();
+			const packageJsonPath = getPackageJsonPath(config);
 			const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-			return res.send({ 
+			res.send({ 
 				version: packageJson.version,
 				//deployedBranch: config.deployedBranch || 'unknown'
 			});
 		} 
 		catch (err) {
 			console.error('Error reading package.json:', err);
-			return res.status(500).send('Error reading package.json');
+			res.status(500).send('Error reading package.json');
 		}
 	});
 

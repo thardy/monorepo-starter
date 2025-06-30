@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { AppSettings } from '@app/common/models/app-settings.model';
 import {Dexie} from 'dexie';
 import * as _ from 'lodash';
 
@@ -7,19 +8,18 @@ const DB_INITIAL_VERSION = 1;
 
 @Injectable({providedIn: 'root'})
 export class IdbService {
+  private config = inject(AppSettings);
   dbUpgraded = false;
   currentDbVersion = DB_INITIAL_VERSION;
   oldDbVersion = this.currentDbVersion;
   db: any;
   dbConnected = false;
 
-  constructor() { }
-
-  async connectToIDB() {
-    console.log(`IdbService connectToIDB()`);
+  constructor() {
+    console.log(`IdbService constructor()`);
 
     // create instance
-    this.db = new Dexie('RiskAnswers');
+    this.db = new Dexie(this.config.appName);
 
     // define schema
     this.db.version(DB_INITIAL_VERSION).stores({
@@ -31,14 +31,18 @@ export class IdbService {
     // });
 
     // open the database
-    return this.db.open()
+    this.db.open()
+      .then(() => {
+        this.dbConnected = true;
+        console.log(`Connected to indexed-db`);
+      })
       .catch((e: any) => {
         console.error(`db.open() failed: ${e}`);
       });
   }
 
   async deleteDatabase() {
-    const db = new Dexie('RiskAnswers');
+    const db = new Dexie(this.config.appName);
     return db.delete();
   }
 

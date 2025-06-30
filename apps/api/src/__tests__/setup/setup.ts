@@ -1,12 +1,14 @@
 import { MongoClient } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
-import config from '#server/config/config';
-import testUtils from '#test/test.utils';
-import testApiUtils from '#test/test-api.utils';
 import {expressUtils} from '@loomcore/api/utils';
 import { setBaseApiConfig } from '@loomcore/api/config';
+
 import {setupRoutes} from '#server/routes/routes';
+import config from '#server/config/config';
+import testUtils from './test.utils.js';
+import testApiUtils from './test-api.utils.js';
+
 
 let mongo: MongoMemoryServer;
 let mongoClient: MongoClient;
@@ -17,35 +19,8 @@ vi.setConfig({ testTimeout: 60000 });
 beforeAll(async () => {
   try {
     // Initialize API common config with mock values for testing
-    setBaseApiConfig({
-      env: 'test',
-      hostName: 'localhost',
-      appName: 'test-app',
-      clientSecret: 'test-secret',
-      mongoDbUrl: '',
-      databaseName: '',
-      externalPort: 4000,
-      internalPort: 8083,
-      corsAllowedOrigins: ['*'],
-      saltWorkFactor: 10,
-      jobTypes: '',
-      deployedBranch: '',
-      debug: {
-        showErrors: false
-      },
-      app: { multiTenant: true },
-      auth: {
-        jwtExpirationInSeconds: 3600,
-        refreshTokenExpirationInDays: 7,
-        deviceIdCookieMaxAgeInDays: 730,
-        passwordResetTokenExpirationInMinutes: 20
-      },
-      email: {
-        // These can be empty/undefined in tests as specified by the interface
-        sendGridApiKey: 'SG.WeDontHaveAKeyYet',
-        fromAddress: undefined
-      }
-    });
+    // The 'config' object is now the mocked version from 'test-config-setup.ts'
+    setBaseApiConfig(config);
     
     mongo = await MongoMemoryServer.create({
       instance: {

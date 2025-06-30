@@ -1,10 +1,11 @@
 import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import {inject} from '@angular/core';
 import {from as observableFromPromise} from 'rxjs';
+//import {defer} from 'rxjs';
 import {mergeMap} from 'rxjs/operators';
 
 import {AuthService} from '../services/auth.service';
-import {BaseClientConfig} from '@app/ng-common/config/models/base-client-config.interface';
+import {BaseClientConfig} from '../../config/models/base-client-config.model';
 
 export const authRequestInterceptor: HttpInterceptorFn = (req, next) => {
   const config = inject(BaseClientConfig);
@@ -18,6 +19,7 @@ export const authRequestInterceptor: HttpInterceptorFn = (req, next) => {
 
   if (authService.isCallToSecureApi(req.url)) {
     return observableFromPromise(authService.getAccessToken())
+    //return defer(() => authService.getAccessToken())
       .pipe(
         mergeMap((token: string) => {
           modifiedRequest = addTokenToRequest(req, token);

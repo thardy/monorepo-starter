@@ -1,15 +1,15 @@
 import {BehaviorSubject, defer, firstValueFrom, Observable, of as observableOf, switchMap, throwError as observableThrowError} from 'rxjs';
 import {inject, Injectable} from '@angular/core';
 import * as _ from 'lodash'
-import {UserContext} from '../models/user-context.model';
+import {IUserContext} from '@loomcore/common/models';
 import {HttpService} from '@common/services/http.service';
 import {catchError, map, tap} from 'rxjs/operators';
 import {AuthTokenCacheService} from './auth-token-cache.service';
-import {LoginResponse} from '../models/login-response.model';
+import {ILoginResponse} from '@loomcore/common/models';
 import {BasicAuthProviderService} from './basic-auth-provider.service';
 import {IdentityProviderAuthState} from '../models/identity-provider-auth-state.model';
 import {AppSettings} from '@common/models/app-settings.model';
-import {Tokens} from '../models/tokens.model';
+import {ITokenResponse} from '@loomcore/common/models';
 
 @Injectable({providedIn: 'root'})
 export class AuthService {
@@ -37,10 +37,10 @@ export class AuthService {
     );
   }
 
-  handleLoginResponse(loginResponse: LoginResponse) {
+  handleLoginResponse(loginResponse: ILoginResponse) {
     let userContext = null;
 
-    let cachingPromise: Promise<Tokens | null> = Promise.resolve(null);
+    let cachingPromise: Promise<ITokenResponse | null> = Promise.resolve(null);
     if (loginResponse && loginResponse.tokens) {
       userContext = loginResponse.userContext;
       /**
@@ -331,7 +331,7 @@ export class AuthService {
     console.log('...attempting to acquire token silently');
     return this.getCachedRefreshToken()
       .then((refreshToken: string) => {
-        let promise: Promise<Tokens | null> = Promise.resolve(null);
+        let promise: Promise<ITokenResponse | null> = Promise.resolve(null);
         if (refreshToken) {
           console.log('...refreshToken found.  Attempting to get new token using refreshToken');
           promise = this.authProvider.requestTokenUsingRefreshToken(refreshToken);
@@ -341,8 +341,8 @@ export class AuthService {
         }
         return promise;
       })
-      .then((tokenResponse: Tokens | null) => {
-        let promise: Promise<Tokens | null> = Promise.resolve(null);
+      .then((tokenResponse: ITokenResponse | null) => {
+        let promise: Promise<ITokenResponse | null> = Promise.resolve(null);
         if (tokenResponse && tokenResponse.accessToken) {
           /**
            * cache the tokenResponse (contains both the accessToken and the refreshToken)
@@ -352,7 +352,7 @@ export class AuthService {
         }
         return promise;
       })
-      .then((tokenResponse: Tokens | null) => {
+      .then((tokenResponse: ITokenResponse | null) => {
         let token = null;
         if (tokenResponse) {
           token = tokenResponse.accessToken;
@@ -400,7 +400,7 @@ export class AuthService {
       });
   }
 
-  private extractLoginResponse(response: any) {
+  private extractLoginResponse(response: any): ILoginResponse | null {
     let loginResponse = null;
     const data = response?.data;
     if (data) {
@@ -409,15 +409,15 @@ export class AuthService {
         data.userContext.preferences = preferences;
       }
 
-      loginResponse = new LoginResponse(data);
+      loginResponse = data as ILoginResponse;
     }
     return loginResponse;
   }
 
-  private extractUserContext(response: any): UserContext | null {
+  private extractUserContext(response: any): IUserContext | null {
     let result = null;
     if (response?.data) {
-      result = new UserContext(response.data);
+      result = response.data as IUserContext;
     }
     return result;
   }

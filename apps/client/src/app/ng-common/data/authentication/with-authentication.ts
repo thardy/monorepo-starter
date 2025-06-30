@@ -5,17 +5,17 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import {User} from '@ng-common/auth/models/user.model';
+import {IUser} from '@loomcore/common/models';
 import {AuthService} from '@ng-common/auth/services/auth.service';
 import {withSimpleCallState} from '../common/with-simple-call-state';
 //import {withCallState} from '../common/call-state.feature';
 
-const initialUserState: User = {
-
+class AuthState {
+  user: IUser | undefined;
 }
 
-const initialAuthState = {
-  user: initialUserState
+const initialAuthState: AuthState = {
+  user: undefined
 }
 
 /**
@@ -53,7 +53,7 @@ export const withAuthentication = () =>
       async function userAuthenticated() {
         const userContext = await authService.getUserContext();
         const user = userContext?.user;
-        patchState(state, {user: { ...user }});
+        patchState(state, { user: user ? { ...user } : undefined });
       }
 
       async function logout() {
@@ -72,7 +72,7 @@ export const withAuthentication = () =>
       }
 
       function  userLoggedOut() {
-        patchState(state, { user: {...initialUserState} });
+        patchState(state, { user: undefined });
       }
 
       return { userAuthenticated, logout, userLoggedOut };

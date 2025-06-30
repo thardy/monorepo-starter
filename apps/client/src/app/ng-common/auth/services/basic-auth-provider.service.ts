@@ -5,7 +5,7 @@ import {catchError, map} from 'rxjs/operators';
 import {HttpService} from '@common/services/http.service';
 import {AppSettings} from '@common/models/app-settings.model';
 import {IAuthProvider} from '../models/auth-provider.interface';
-import {Tokens} from '../models/tokens.model';
+import {ITokenResponse} from '@loomcore/common/models';
 import {ApiResponse} from '@common/models/api-response.type';
 
 @Injectable({providedIn: 'root'})
@@ -17,9 +17,9 @@ export class BasicAuthProviderService implements IAuthProvider {
     this.baseUrl = `${this.config.apiUrl}/auth`;
   }
 
-  createModel(options: any) {
-    return new Tokens(options);
-  }
+  // createModel(options: any) {
+  //   return new ITokenResponse(options);
+  // }
 
   // redirectToAuthProviderLogin(): void {
   //     // redirect to third-party login page (for oauth)
@@ -73,16 +73,16 @@ export class BasicAuthProviderService implements IAuthProvider {
   //   return body;
   // }
 
-  extractTokens(response: ApiResponse<Tokens>): Tokens | null {
+  extractTokens(response: ApiResponse<ITokenResponse>): ITokenResponse | null {
     let item = null;
-    const createModelFunc = this['createModel'];
+    //const createModelFunc = this['createModel'];
 
-    if (!createModelFunc) {
-      item = <Tokens>response?.data || {};
-    }
-    else if (response?.data) {
-      item = createModelFunc(response);
-    }
+    //if (!createModelFunc) {
+      item = <ITokenResponse>response?.data || {};
+    //}
+    //else if (response?.data) {
+    //  item = createModelFunc(response);
+    //}
 
     return item;
   }

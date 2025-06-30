@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {IdbService} from '@ng-common/indexed-db/idb.service';
 import {IdbStoreNames} from '@common/constants/idb-store-names.constants';
-import {Tokens} from '../models/tokens.model';
+import {ITokenResponse} from '@loomcore/common/models';
 
 @Injectable({providedIn: 'root'})
 export class AuthTokenCacheService {
@@ -9,7 +9,7 @@ export class AuthTokenCacheService {
     private idbService: IdbService,
   ) {}
 
-  async cacheTokens(tokens: Tokens): Promise<Tokens> {
+  async cacheTokens(tokens: ITokenResponse): Promise<ITokenResponse> {
     // async/await version
     await this.clearCachedTokens();
     await this.idbService.deleteAll(IdbStoreNames.tokenCache);

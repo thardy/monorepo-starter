@@ -1,0 +1,16 @@
+{
+  "comments": "These values should be for local development. During deployment, the contents of this file are replaced by the ConfigMap in k8s",
+  "appName": "@monorepo-starter/client",
+  "env": "local",
+  "version": 1,
+  "apiUrl": "http://monorepo-starter.local/api",
+  "auth": {
+    "interceptorEnabled": true,
+    "secureUrls": [
+      "http://riskanswers.local/api"
+    ],
+    "unsecureEndpoints": [],
+    "redirectUri": "http://localhost:4200/implicit/callback",
+    "postLogoutRedirectUri": "http://localhost:4200/logout"
+  }
+}

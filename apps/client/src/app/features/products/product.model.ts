@@ -33,10 +33,3 @@ export const ProductSchema = Type.Object({
 });
 
 export const ProductSpec = entityUtils.getModelSpec(ProductSchema, { isAuditable: true });
-
-// // TypeScript type - this only contains the product properties (name, description, price, quantity). Is this needed?
-// export type ProductType = Static<typeof ProductSchema>;
-
-
-
-

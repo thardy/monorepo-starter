@@ -12,7 +12,7 @@ const getPackageJsonPath = (config: IBaseApiConfig) => {
 	const isTest = config.env === 'test';
 	const currentDir = path.dirname(new URL(import.meta.url).pathname);
 	// In test environment, use path from project root, otherwise use path relative to this file
-	const pathToPackageJson = isTest ? path.join(currentDir, '../../../api/package.json') : path.join(currentDir, '../../package.json');
+	const pathToPackageJson = isTest ? path.join(process.cwd(), './apps/api/package.json') : path.join(currentDir, '../../../package.json');
 	
 	return pathToPackageJson;
 };

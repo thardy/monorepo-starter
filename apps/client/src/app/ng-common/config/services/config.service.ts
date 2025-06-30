@@ -1,11 +1,11 @@
-import {IBaseClientConfig} from '../models/base-client-config.interface';
+import {BaseClientConfig} from '../models/base-client-config.model';
 
 export async function loadConfigForRemote(appName: string, configPath: string): Promise<any> {
   return await ConfigService.getInstance().loadRemoteConfig(appName, configPath);
 }
 
-export async function loadHostConfig(): Promise<void> {
-  return await ConfigService.getInstance().loadHostConfig();
+export async function loadHostConfig(configPath: string): Promise<void> {
+  return await ConfigService.getInstance().loadHostConfig(configPath);
 }
 
 export class ConfigService {
@@ -28,13 +28,13 @@ export class ConfigService {
     return this.remoteConfigs.get(appName) as T;
   }
 
-  public getHostClientConfig(): IBaseClientConfig {
+  public getHostClientConfig(): BaseClientConfig {
     return this.hostConfig;
   }
 
 
-  public async loadHostConfig(): Promise<any> {
-    const config = await this.loadConfigFromEnv();
+  public async loadHostConfig(configPath: string): Promise<any> {
+    const config = await this.loadConfigFromFile('', configPath);
 
     this.hostConfig = config;
   }
@@ -88,24 +88,6 @@ export class ConfigService {
     return a;
   }
 
-  // Helper function to parse potential array strings from environment variables
-  private parseArrayFromEnv(envValue: string | undefined): string[] {
-    if (!envValue) return [];
-    
-    // Check if it looks like a JSON array
-    if (envValue.trim().startsWith('[')) {
-      try {
-        return JSON.parse(envValue);
-      } catch (e) {
-        console.warn('Failed to parse JSON array from env variable:', e);
-        return [];
-      }
-    }
-    
-    // Otherwise split by comma
-    return envValue.split(',').map(item => item.trim()).filter(Boolean);
-  }
-
   // Convert string to boolean
   private parseBoolean(value: string | undefined): boolean {
     if (!value) return false;
@@ -117,23 +99,6 @@ export class ConfigService {
     if (!value) return defaultValue;
     const parsedValue = Number(value);
     return isNaN(parsedValue) ? defaultValue : parsedValue;
-  }
-
-  private async loadConfigFromEnv(): Promise<IBaseClientConfig> {
-    // Get version from environment variable
-    const version = process.env['VERSION'] || '';
-
-    return {
-      env: process.env['NODE_ENV'] || 'dev',
-      version: version,
-      auth: {
-        interceptorEnabled: this.parseBoolean(process.env['INTERCEPTOR_ENABLED']) || true,
-        secureUrls: this.parseArrayFromEnv(process.env['SECURE_URLS']),
-        unsecureEndpoints: this.parseArrayFromEnv(process.env['UNSECURE_ENDPOINTS']),
-        redirectUri: process.env['REDIRECT_URI'] || '',
-        postLogoutRedirectUri: process.env['POST_LOGOUT_REDIRECT_URI'] || '',
-      }
-    };
   }
 
 }

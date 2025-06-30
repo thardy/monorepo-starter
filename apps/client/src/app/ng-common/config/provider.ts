@@ -1,5 +1,5 @@
 import {APP_INITIALIZER, FactorySansProvider, Provider, Type} from '@angular/core';
-import {BaseClientConfig} from './models/base-client-config.interface';
+import {BaseClientConfig} from './models/base-client-config.model';
 import {ConfigService} from './services/config.service';
 
 /**
@@ -56,12 +56,12 @@ export function provideConfig(...features: ConfigFeature<ConfigFeatureKind>[]): 
  * @see {@link provideConfig}
  * @publicApi
  */
-export function forRoot(configType: Type<any>) {
+export function forRoot(configPath: string, configType: Type<any>) {
   return makeConfigFeature(ConfigFeatureKind.ForRoot, [
     {
       provide: APP_INITIALIZER,
       useFactory: (configService: ConfigService) => {
-        return () => configService.loadHostConfig();
+        return () => configService.loadHostConfig(configPath);
       },
       deps: [ConfigService],
       multi: true
@@ -69,14 +69,14 @@ export function forRoot(configType: Type<any>) {
     {
       provide: BaseClientConfig,
       useFactory: (configService: ConfigService) => {
-        return configService.getHostAppSettings();
+        return configService.getHostClientConfig();
       },
       deps: [ConfigService],
     },
     {
       provide: configType,
       useFactory: (configService: ConfigService) => {
-        return configService.getHostAppSettings();
+        return configService.getHostClientConfig();
       },
       deps: [ConfigService],
     },

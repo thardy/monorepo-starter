@@ -7,10 +7,10 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    setupFiles: ['./src/test/setup.ts'],
-    globalSetup: ['./src/test/global-setup.ts'],
-    include: ['**/__tests__/**/*.test.ts?(x)', '**/?(*.)+(test).ts?(x)'],
-    exclude: ['**/__tests__/setup/**/*'],
+    setupFiles: ['./src/__tests__/setup/test-config-setup.ts', './src/__tests__/setup/setup.ts'],
+    globalSetup: ['./src/__tests__/setup/global-setup.ts'],
+    include: ['src/**/__tests__/**/*.test.ts?(x)', 'src/**/?(*.)+(test).ts?(x)'],
+    exclude: ['**/node_modules/**', '**/__tests__/setup/**/*'],
     environmentOptions: {
       env: {
         NODE_ENV: 'test'
@@ -19,7 +19,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'dist/', 'src/test/']
+      exclude: ['node_modules/', 'dist/', 'src/__tests__/setup/']
     },
     root: '.',
     resolveSnapshotPath: (testPath, snapExtension) => 

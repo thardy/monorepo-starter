@@ -61,7 +61,7 @@ By default, most errors in tests are suppressed for cleaner test output. This is
 
 If you need to see detailed error messages for debugging purposes, you can modify the `setup.ts` file:
 
-1. Open `apps/api/src/test/setup.ts`
+1. Open `apps/api/src/__tests__/setup.ts`
 2. Find the `setBaseApiConfig` function call
 3. Change `debug.showErrors` from `false` to `true`:
 

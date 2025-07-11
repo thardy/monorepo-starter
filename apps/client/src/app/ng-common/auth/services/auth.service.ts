@@ -32,12 +32,19 @@ export class AuthService {
      * login returns a LoginResponse { tokens: {accessToken, refreshToken}, userContext }, and getUserContext
      * returns just a userContext
      */
-    return this.callLoginApi(email, password).pipe(
-      switchMap((response) => this.handleLoginResponse(response))
-    );
+
+    return this.http.post(`${this.baseUrl}/login`, {email: email, password: password})
+      .pipe(
+        map(response => this.extractLoginResponse(response)),
+        switchMap((response) => this.handleLoginResponse(response)),
+        catchError(error => this.handleError(error))
+      );
+    // return this.callLoginApi(email, password).pipe(
+    //   switchMap((response) => this.handleLoginResponse(response))
+    // );
   }
 
-  handleLoginResponse(loginResponse: ILoginResponse) {
+  handleLoginResponse(loginResponse: ILoginResponse | null) {
     let userContext = null;
 
     let cachingPromise: Promise<ITokenResponse | null> = Promise.resolve(null);
@@ -72,13 +79,13 @@ export class AuthService {
     // });
   }
 
-  private callLoginApi(email: string, password: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/login`, {email: email, password: password})
-      .pipe(
-        map(response => this.extractLoginResponse(response)),
-        catchError(error => this.handleError(error))
-      );
-  }
+  // private callLoginApi(email: string, password: string): Observable<any> {
+  //   return this.http.post(`${this.baseUrl}/login`, {email: email, password: password})
+  //     .pipe(
+  //       map(response => this.extractLoginResponse(response)),
+  //       catchError(error => this.handleError(error))
+  //     );
+  // }
 
   logout() {
     const promise = this.clearClientsideAuth()
@@ -89,8 +96,11 @@ export class AuthService {
         return this.handleError(error);
       });
 
-    const observable = defer(() => promise)
-    return observable;
+    return promise;
+
+    // I had this returning an observable at one point...
+    // const observable = defer(() => promise)
+    // return observable;
   }
 
   autoAuthenticateIfPossible() {

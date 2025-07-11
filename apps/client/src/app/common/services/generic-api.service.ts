@@ -2,10 +2,10 @@ import {throwError as observableThrowError, Observable, firstValueFrom} from 'rx
 import {inject, Injectable} from '@angular/core';
 import { HttpService } from './http.service';
 import { catchError, map } from 'rxjs/operators';
-import Utils from '../utils/utils';
 import { HttpParams } from '@angular/common/http';
 import {AppSettings} from '@common/models/app-settings.model';
 import {ApiResponse} from '@common/models/api-response.type';
+import {IPagedResult} from '@loomcore/common/models';
 
 @Injectable()
 export abstract class GenericApiService<TData> {
@@ -17,23 +17,32 @@ export abstract class GenericApiService<TData> {
     this.baseUrl =  `${this.config.apiUrl}/${resourceName}`;
   }
 
-  //abstract createModel(data: any): TData;
-
-  getAll(params?: any): Observable<TData[]> {
-    console.log(`Making GET request to: ${this.baseUrl}`, params);
-    return this.http.get(this.baseUrl, params)
+  getAll(params?: Record<string, any>): Observable<TData[]> {
+    return this.http.get<ApiResponse<TData[]>>(`${this.baseUrl}/all`, params)
       .pipe(
         map((response) => this.extractDataList(response)),
         catchError((error) => this.handleError(error))
       );
   }
 
-  getAllAsPromise(params?: any): Promise<TData[]> {
+  getAllAsPromise(params?: Record<string, any>): Promise<TData[]> {
     return firstValueFrom(this.getAll(params));
   }
 
+  get(params?: Record<string, any>): Observable<IPagedResult<TData>> {
+    return this.http.get<ApiResponse<IPagedResult<TData>>>(`${this.baseUrl}`, params)
+      .pipe(
+        map((response) => this.extractPagedResult(response)),
+        catchError((error) => this.handleError(error))
+      );
+  }
+
+  getAsPromise(params?: Record<string, any>): Promise<IPagedResult<TData>> {
+    return firstValueFrom(this.get(params));
+  }
+
   getById(id: number | string): Observable<TData> {
-    return this.http.get(`${this.baseUrl}/${id}`)
+    return this.http.get<ApiResponse<TData>>(`${this.baseUrl}/${id}`)
       .pipe(
         map((response) => this.extractData(response)),
         catchError((error) => this.handleError(error))
@@ -44,32 +53,32 @@ export abstract class GenericApiService<TData> {
     return firstValueFrom(this.getById(id));
   }
 
-  getCustom<customType>(): Observable<customType | {}> {
-    return this.http.get<customType>(`${this.baseUrl}`)
+  getCustom<TCustom>(): Observable<TCustom> {
+    return this.http.get<ApiResponse<TCustom>>(`${this.baseUrl}`)
       .pipe(
-        map((response) => this.extractCustomData<customType>(response)),
+        map((response) => this.extractCustomData<TCustom>(response)),
         catchError((error) => this.handleError(error))
       );
   }
 
-  getCustomAsPromise<customType>(): Promise<customType | {}> {
-    return firstValueFrom(this.getCustom<customType>());
+  getCustomAsPromise<TCustom>(): Promise<TCustom> {
+    return firstValueFrom(this.getCustom<TCustom>());
   }
 
-  getCustomList<customType>(): Observable<customType[]> {
-    return this.http.get<customType>(`${this.baseUrl}`)
+  getCustomList<TCustom>(): Observable<TCustom[]> {
+    return this.http.get<ApiResponse<TCustom[]>>(`${this.baseUrl}`)
       .pipe(
-        map((response) => this.extractCustomDataList<customType>(response)),
+        map((response) => this.extractCustomDataList<TCustom>(response)),
         catchError((error) => this.handleError(error))
       );
   }
 
-  getCustomListAsPromise<customType>(): Promise<customType[]> {
-    return firstValueFrom(this.getCustomList<customType>());
+  getCustomListAsPromise<TCustom>(): Promise<TCustom[]> {
+    return firstValueFrom(this.getCustomList<TCustom>());
   }
 
   create(item: TData): Observable<TData> {
-    return this.http.post(`${this.baseUrl}`, item)
+    return this.http.post<ApiResponse<TData>>(`${this.baseUrl}`, item)
       .pipe(
         map((response) => this.extractData(response)),
         catchError((error) => this.handleError(error))
@@ -81,7 +90,7 @@ export abstract class GenericApiService<TData> {
   }
 
   update(id: number | string, item: TData): Observable<TData> {
-    return this.http.put(`${this.baseUrl}/${id}`, item)
+    return this.http.put<ApiResponse<TData>>(`${this.baseUrl}/${id}`, item)
       .pipe(
         map((response) => this.extractData(response)),
         catchError((error) => this.handleError(error))
@@ -92,128 +101,117 @@ export abstract class GenericApiService<TData> {
     return firstValueFrom(this.update(id, item));
   }
 
-  delete(id: number | string): Observable<object> {
-    return this.http.delete(`${this.baseUrl}/${id}`)
+  delete(id: number | string): Observable<void> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`)
       .pipe(
+        map(() => void 0),
         catchError((error) => this.handleError(error))
       );
   }
 
-  deleteAsPromise(id: number | string): Promise<object> {
+  deleteAsPromise(id: number | string): Promise<void> {
     return firstValueFrom(this.delete(id));
   }
 
-  extractData(response: any, returnApiResponse: boolean = false): TData {
-    const item = this.convertJsonToModel(response);
-
-    return item;
-  }
-
-  extractDataList(response: any): TData[] {
-    const items = this.convertJsonToModelArray(response);
-
-    return items;
-  }
-
-  extractCustomData<customType>(response: any): customType | {} {
-    const item = this.convertJsonToCustomModel<customType>(response);
-    return item;
-  }
-
-  extractCustomDataList<customType>(response: any): customType[] {
-    const items = this.convertJsonToCustomModelArray<customType>(response);
-    return items;
-  }
-
-  extractAnyData(response: any) {
-    return (response?.data as any) || {};
-  }
-
-  extractStringData(response: any) {
-    return (response?.data as string) || '';
-  }
-
-  extractNumberData(response: any) {
-    if (response?.data && typeof response?.data === 'number') {
-      return response.data as number;
-    } else {
-      return 0;
+  /**
+   * Extracts single data item from API response
+   */
+  private extractData(response: ApiResponse<TData>): TData {
+    if (response?.data !== undefined && response.data !== null) {
+      return response.data;
     }
+    throw new Error('No data found in API response');
   }
 
-  extractAnyResponse(response: any) {
-    return (response as any) || {};
+  /**
+   * Extracts paged result from API response
+   */
+  private extractPagedResult(response: ApiResponse<IPagedResult<TData>>): IPagedResult<TData> {
+    if (response?.data !== undefined && response.data !== null) {
+      return response.data;
+    }
+    throw new Error('No data found in API response');
   }
 
-  handleError(error: any) {
-    // no handling currently
+  /**
+   * Extracts array of data items from API response
+   * Used by getAll() which expects direct arrays from /all endpoints
+   */
+  private extractDataList(response: ApiResponse<TData[]>): TData[] {
+    if (response?.data !== undefined && response.data !== null) {
+      return Array.isArray(response.data) ? response.data : [];
+    }
+    return [];
+  }
+
+  /**
+   * Extracts custom typed data from API response
+   */
+  private extractCustomData<TCustom>(response: ApiResponse<TCustom>): TCustom {
+    if (response?.data !== undefined && response.data !== null) {
+      return response.data;
+    }
+    throw new Error('No data found in API response');
+  }
+
+  /**
+   * Extracts custom typed array data from API response
+   */
+  private extractCustomDataList<TCustom>(response: ApiResponse<TCustom[]>): TCustom[] {
+    if (response?.data !== undefined && response.data !== null) {
+      return Array.isArray(response.data) ? response.data : [];
+    }
+    return [];
+  }
+
+  /**
+   * Extracts raw data without type checking (use sparingly)
+   */
+  extractAnyData(response: ApiResponse<any>): any {
+    return response?.data || {};
+  }
+
+  /**
+   * Extracts string data from API response
+   */
+  extractStringData(response: ApiResponse<string>): string {
+    return response?.data || '';
+  }
+
+  /**
+   * Extracts number data from API response
+   */
+  extractNumberData(response: ApiResponse<number>): number {
+    return response?.data || 0;
+  }
+
+  /**
+   * Extracts the entire API response (including metadata)
+   */
+  extractAnyResponse(response: ApiResponse<any>): ApiResponse<any> {
+    return response || {};
+  }
+
+  /**
+   * Handles API errors - override in subclasses for custom error handling
+   */
+  protected handleError(error: any): Observable<never> {
+    // Basic error handling - can be enhanced in subclasses
     return observableThrowError(() => error);
   }
 
-  protected convertObjectToHttpParams(params: any) {
+  /**
+   * Converts object to HttpParams for query strings
+   */
+  protected convertObjectToHttpParams(params: Record<string, any>): HttpParams {
     let httpParams = new HttpParams();
 
     for (const property in params) {
-      if (params.hasOwnProperty(property)) {
-        httpParams = httpParams.append(property, params[property]);
+      if (params.hasOwnProperty(property) && params[property] !== undefined && params[property] !== null) {
+        httpParams = httpParams.append(property, params[property].toString());
       }
     }
 
     return httpParams;
   }
-
-  // todo: refactor this createModel stuff - we don't create models anymore
-  private convertJsonToModel(response: any): TData {
-    let data;
-
-    if (response?.data) {
-      data = response.data;
-      if (typeof data !== 'object') {
-        data = Utils.tryParseJSON(data);
-      }
-    }
-
-    return data as TData;
-  }
-
-  // refactor this createModel stuff - we don't create models anymore - lean more towards a util or something to handle apiResponse
-  private convertJsonToModelArray(response: any): TData[] {
-    const dataList: TData[] = [];
-
-    if (response?.data && Array.isArray(response?.data)) {
-      for (const item of response.data) {
-        if (item) {
-          if (typeof item !== 'object') {
-            const parsedItem = Utils.tryParseJSON(item);
-            dataList.push(parsedItem);
-          } else {
-            dataList.push(item);
-          }
-        }
-      }
-    }
-
-    return dataList;
-  }
-
-  private convertJsonToCustomModel<dataType>(response: any): dataType | {} {
-    let data;
-
-    if (response?.data) {
-      data = (response.data as dataType) || {};
-    }
-
-    return data as dataType | {};
-  }
-
-  private convertJsonToCustomModelArray<dataListType>(response: any): dataListType[] {
-    let dataList: dataListType[] = [];
-
-    if (response?.data) {
-      dataList = (response.data as dataListType[]) || [];
-    }
-
-    return dataList;
-  }
-
 }

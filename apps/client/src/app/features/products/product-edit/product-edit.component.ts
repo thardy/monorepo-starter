@@ -1,6 +1,6 @@
 import {finalize} from 'rxjs/operators';
 import {takeUntil} from 'rxjs';
-import {Component, effect, EventEmitter, inject, input, Input, Output} from '@angular/core';
+import {Component, computed, effect, EventEmitter, inject, input, Input, Output} from '@angular/core';
 import {BaseComponent} from '@common/components/base.component';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {AsyncButtonDirective, AutofocusDirective} from '@common/directives';
@@ -30,6 +30,11 @@ export class ProductEditComponent extends BaseComponent {
   form: FormGroup;
   saving = this.productsStore.isPending;
   saveButtonClicked = false;
+
+  // Computed signal for read-only derived value
+  private shouldCloseForm = computed(() => {
+    return this.saveButtonClicked && this.saving() === false;
+  });
   
   constructor(private fb: FormBuilder) {
     super();
@@ -44,9 +49,9 @@ export class ProductEditComponent extends BaseComponent {
 
     this.form = this.fb.group(formControls);
 
+    // Reactive form closing - clean and simple!
     effect(() => {
-      const saving = this.saving();
-      if (this.saveButtonClicked && saving === false) {
+      if (this.shouldCloseForm()) {
         this.formClosed.emit(); // we are done saving - close this form
       }
     });
@@ -72,6 +77,9 @@ export class ProductEditComponent extends BaseComponent {
     const product: IProduct = {
       ...(this.product() || {}),
       ...formValue,
+      price: Number(formValue.price),
+      quantity: Number(formValue.quantity),
+      someDate: formValue.someDate ? new Date(formValue.someDate).toISOString() : null,
     } as IProduct;
 
     if (this.mode() === 'create') {
@@ -80,5 +88,4 @@ export class ProductEditComponent extends BaseComponent {
       this.dispatch.updateButtonClicked(product);
     }
   }
-
 }

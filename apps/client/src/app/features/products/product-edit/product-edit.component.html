@@ -1,10 +1,11 @@
 <h2>Product Form</h2>
 
 <form [formGroup]="form" (ngSubmit)="onSave()">
-  <input autofocus placeholder="First Name" formControlName="firstName">
-  <input placeholder="Last Name" formControlName="lastName">
-  <input placeholder="Birthdate" formControlName="birthdate">
-  <input placeholder="Gender" formControlName="gender">
+  <input autofocus placeholder="Name" formControlName="name">
+  <input placeholder="Description" formControlName="description">
+  <input type="number" placeholder="Price" formControlName="price">
+  <input type="number" placeholder="Quantity" formControlName="quantity">
+  <input placeholder="Some Date" formControlName="someDate">
 
   <button type="button" (click)="onCancel()">Cancel</button>
   <button type="submit" app-async-button [asyncInProgress]="saving()" [asyncType]="'save'">Save</button>

@@ -2,7 +2,7 @@ import { MongoClient } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
 import {expressUtils} from '@loomcore/api/utils';
-import { setBaseApiConfig } from '@loomcore/api/config';
+import { initSystemUserContext, setBaseApiConfig } from '@loomcore/api/config';
 
 import {setupRoutes} from '#server/routes/routes';
 import config from '#server/config/config';
@@ -31,6 +31,7 @@ beforeAll(async () => {
     const mongoUri = mongo.getUri();
     mongoClient = await MongoClient.connect(mongoUri);
     const db = mongoClient.db(config.databaseName);
+    initSystemUserContext(db);
     
     // Initialize test utils with database
     await testUtils.initialize(db);

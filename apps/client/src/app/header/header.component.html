@@ -1,0 +1,14 @@
+<header>
+  <div class="header-nav">
+    <app-nav />
+  </div>
+  
+  <div class="header-user">
+    @if (userContext && userContext(); as ctx) {
+      <span class="user-info">{{ ctx.user.displayName || ctx.user.email }}</span>
+      <button class="logout-btn" (click)="onLogout()">Logout</button>
+    } @else {
+      <div class="login-message">Log in</div>
+    }
+  </div>
+</header>

@@ -1,6 +1,6 @@
 import { signalStore, withState, withHooks } from "@ngrx/signals";
 import { AppState } from "./app.state";
-import { withAuthentication } from "@app/ng-common/data/authentication/with-authentication";
+import { withAuth } from "@app/ng-common/auth/data/with-auth.feature";
 
 const initialAppState: AppState = {
 }
@@ -8,7 +8,7 @@ const initialAppState: AppState = {
 export const AppStore = signalStore(
   { providedIn: 'root' },
   withState(initialAppState),
-  withAuthentication(),
+  withAuth(),
   withHooks({
     onInit(store) {
       console.log('appStore.onInit')

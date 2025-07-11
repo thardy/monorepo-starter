@@ -1,5 +1,4 @@
 <h1>Products</h1>
-<!--<p>{{ user().firstName }} {{ user().lastName }}</p>-->
 @if (loading()) {
   <div>
     loading...
@@ -10,7 +9,7 @@
       <ul>
         @for (product of products(); track product._id) {
           <li>
-            <a [routerLink]="[product._id]">{{ product.name }}</a>
+            <a [routerLink]="[product._id]">{{ product.name }}</a> ${{ product.price }}
             <button (click)="onEdit(product)">Edit</button>
             <!-- <button (click)="onDelete(product)" app-async-button [asyncInProgress]="deleting().get(product._id)" [asyncType]="'delete'">Delete</button> -->
           </li>

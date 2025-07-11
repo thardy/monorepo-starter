@@ -7,7 +7,7 @@
   "auth": {
     "interceptorEnabled": true,
     "secureUrls": [
-      "http://riskanswers.local/api"
+      "http://monorepo-starter.local/api"
     ],
     "unsecureEndpoints": [],
     "redirectUri": "http://localhost:4200/implicit/callback",

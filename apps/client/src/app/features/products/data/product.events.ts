@@ -1,6 +1,7 @@
 import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
 import { IProduct } from '../product.model';
+import { IPagedResult } from '@loomcore/common/models';
 
 export const productListPageEvents = eventGroup({
   source: 'ProductList Page',
@@ -25,7 +26,7 @@ export const productEditPageEvents = eventGroup({
 export const productsApiEvents = eventGroup({
   source: 'Products API',
   events: {
-    loadProductsSuccess: type<IProduct[]>(),
+    loadProductsSuccess: type<IPagedResult<IProduct>>(),
     loadProductsFailure: type<string>(),
     createProductSuccess: type<IProduct>(),
     createProductFailure: type<string>(),

@@ -1,8 +1,7 @@
+import { BasicAuthGuardService } from '@app/ng-common/auth/services/basic-auth-guard.service';
 import { ProductListComponent } from './product-list/product-list.component';
 
 export default [
-  {
-    path: '',
-    component: ProductListComponent
-  },
+  { path: '', component: ProductListComponent, canActivate: [BasicAuthGuardService] },
+  
 ];

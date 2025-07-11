@@ -28,8 +28,8 @@
     "coverage": "cross-env NODE_ENV=test vitest run --coverage"
   },
   "dependencies": {
-    "@loomcore/api": "0.0.20",
-    "@loomcore/common": "0.0.9",
+    "@loomcore/api": "0.0.24",
+    "@loomcore/common": "0.0.12",
     "@sendgrid/mail": "^8.1.4",
     "@sinclair/typebox": "^0.34.31",
     "@types/express": "^4.17.21",

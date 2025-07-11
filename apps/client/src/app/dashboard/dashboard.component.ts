@@ -8,6 +8,6 @@ import {Component, OnInit} from '@angular/core';
 })
 export class DashboardComponent implements OnInit {
   ngOnInit(): void {
-    console.log('TestComponent initialized');
+    console.log('Dashboard initialized');
   }
 }

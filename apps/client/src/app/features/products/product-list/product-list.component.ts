@@ -56,7 +56,6 @@ export class ProductListComponent extends BaseComponent {
 
     effect(() => {
       const products = this.products() as IProduct[];
-      //this.initUxProperties(products);
       console.log(`products changed and we now have ${products.length} total products!!!`);
     });
 
@@ -85,6 +84,7 @@ export class ProductListComponent extends BaseComponent {
   }
 
   onAdd() {
+    this.selectedProduct = null;
     this.adding = true;
   }
 

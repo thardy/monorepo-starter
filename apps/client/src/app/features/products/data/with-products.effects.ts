@@ -8,10 +8,12 @@ import { productsApiEvents } from "./product.events";
 import { ProductService } from "../product.service";
 import { IProduct } from "../product.model";
 import { productEditPageEvents, productListPageEvents } from "./product.events";
+import { IPagedResult } from "@loomcore/common/models";
 
 export function withProductsEffects() {
   return signalStoreFeature(
     withEffects(
+      // todo: get auth working in its own AppStore - DONE
       // todo: refactor to reusable, generic with-crud.effects.ts
       // todo: THEN implement the k8s for client
       // todo: THEN figure out how to modularize and reuse all the k8s and github actions stuff
@@ -24,11 +26,9 @@ export function withProductsEffects() {
           .on(productListPageEvents.opened, productListPageEvents.refreshed)
           .pipe(
             exhaustMap(() =>
-              productService.getAll().pipe(
-                tap(() => console.log('Service observable created')),
-                //filter((products): products is IProduct[] => !!products), // this can be used if getAll returns IProduct[] | undefined
+              productService.get().pipe(
                 mapResponse({
-                  next: (products: IProduct[]) => productsApiEvents.loadProductsSuccess(products),
+                  next: (pagedResult: IPagedResult<IProduct>) => productsApiEvents.loadProductsSuccess(pagedResult),
                   error: (error: { message: string }) =>
                     productsApiEvents.loadProductsFailure(error.message),
                 }),

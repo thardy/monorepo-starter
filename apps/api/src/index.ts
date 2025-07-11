@@ -2,7 +2,7 @@ import { first } from '#server/first'; // keep this first
 import {Db, MongoClient} from 'mongodb';
 import { Server } from 'http';
 
-import {setBaseApiConfig} from '@loomcore/api/config';
+import {setBaseApiConfig, initSystemUserContext} from '@loomcore/api/config';
 import {expressUtils} from '@loomcore/api/utils';
 
 import {setupRoutes} from '#server/routes/routes';
@@ -35,6 +35,7 @@ const startServer = async () => {
     db = mongoClient.db(config.databaseName);
     console.log('...connected to mongoDb');
 
+    await initSystemUserContext(db);
     // we need db to be ready before setting up express - all the controllers need it when they get instantiated
     externalApp = expressUtils.setupExpressApp(db, config, setupRoutes);
     // internalApp = expressUtils.setupExpressApp(db, config, setupInternalRoutes);

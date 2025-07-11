@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "@monorepo-starter/client",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -18,7 +18,7 @@
     "@angular/platform-browser": "^19.2.0",
     "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/router": "^19.2.0",
-    "@loomcore/common": "^0.0.9",
+    "@loomcore/common": "^0.0.12",
     "@ngrx/operators": "^19.2.1",
     "@ngrx/signals": "^19.2.1",
     "dexie": "^4.0.11",

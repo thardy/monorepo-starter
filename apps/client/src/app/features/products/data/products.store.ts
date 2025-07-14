@@ -2,8 +2,8 @@ import { signalStore, type } from '@ngrx/signals';
 import { entityConfig, setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
 
-import { withRequestStatus } from '@app/ng-common/data/with-request-status.feature';
-import { withPagination } from '@app/ng-common/data/with-pagination.feature';
+import { withRequestStatus } from '@ng-common/data/with-request-status.feature';
+import { withPagination } from '@ng-common/data/with-pagination.feature';
 import { IProduct } from '../product.model';
 import { withProductsEffects } from './with-products.effects';
 import { withProductsReducer } from './with-products.reducer';

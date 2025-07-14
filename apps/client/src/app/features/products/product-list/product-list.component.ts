@@ -1,4 +1,4 @@
-import {Component, effect, inject, OnDestroy, OnInit} from '@angular/core';
+import {Component, computed, effect, inject, OnDestroy, OnInit, Signal} from '@angular/core';
 import {RouterModule} from '@angular/router';
 import {Observable, Subject, takeUntil} from 'rxjs';
 import {finalize, tap} from 'rxjs/operators';
@@ -11,12 +11,13 @@ import {IProduct} from '@features/products/product.model';
 import {EntityId} from '@ngrx/signals/entities';
 import { productListPageEvents } from '../data/product.events';
 import { injectDispatch } from '@ngrx/signals/events';
+import { AsyncButtonDirective } from '@common/directives/async-button.directive';
 
 @Component({
   standalone: true,
   selector: 'product-list',
   templateUrl: './product-list.component.html',
-  imports: [RouterModule, ProductEditComponent],
+  imports: [RouterModule, ProductEditComponent, AsyncButtonDirective],
   providers: [ProductsStore]
 })
 export class ProductListComponent extends BaseComponent {
@@ -73,6 +74,12 @@ export class ProductListComponent extends BaseComponent {
     // });
 
     this.dispatch.opened();
+  }
+
+  isProductDeleting(productId: string): Signal<boolean> {
+    return computed(() => {
+      return productId === this.productsStore.idBeingProcessed() && this.productsStore.deleting();
+    });
   }
 
   onEdit(product: IProduct) {

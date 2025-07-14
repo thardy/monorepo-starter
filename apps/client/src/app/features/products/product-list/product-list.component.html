@@ -11,8 +11,8 @@
           <li>
             <a [routerLink]="[product._id]">{{ product.name }}</a> ${{ product.price }}
             <button (click)="onEdit(product)">Edit</button>
-            <!-- <button (click)="onDelete(product)" app-async-button [asyncInProgress]="deleting().get(product._id)" [asyncType]="'delete'">Delete</button> -->
-            <button (click)="onDelete(product)">Delete</button>
+            <button (click)="onDelete(product)" app-async-button [asyncInProgress]="isProductDeleting(product._id)()" [asyncType]="'delete'">Delete</button>
+            <!-- <button (click)="onDelete(product)">Delete</button> -->
           </li>
         }
       </ul>

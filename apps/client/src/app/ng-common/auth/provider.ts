@@ -5,7 +5,7 @@ import { authRequestInterceptor } from "./interceptors/auth-request.interceptor"
 // import {OKTA_CONFIG, OktaAuthConfigService, OktaAuthModule} from '@okta/okta-angular';
 // import {OktaAuth} from '@okta/okta-auth-js';
 
-import {BaseClientConfig} from '@app/ng-common/config/models/base-client-config.model';
+import {BaseClientConfig} from '@ng-common/config/models/base-client-config.model';
 import {unauthenticatedResponseInterceptor} from '@ng-common/auth/interceptors/unauthenticated-response.interceptor';
 
 /**

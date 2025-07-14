@@ -1,7 +1,7 @@
 import {HttpErrorResponse, HttpInterceptorFn} from '@angular/common/http';
 import {inject} from '@angular/core';
 
-import {BaseClientConfig} from '@app/ng-common/config/models/base-client-config.model';
+import {BaseClientConfig} from '@ng-common/config/models/base-client-config.model';
 import {AuthService} from '../services/auth.service';
 import {catchError} from 'rxjs/operators';
 import {throwError} from 'rxjs';

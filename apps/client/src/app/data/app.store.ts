@@ -1,6 +1,6 @@
 import { signalStore, withState, withHooks } from "@ngrx/signals";
 import { AppState } from "./app.state";
-import { withAuth } from "@app/ng-common/auth/data/with-auth.feature";
+import { withAuth } from "@ng-common/auth/data/with-auth.feature";
 
 const initialAppState: AppState = {
 }

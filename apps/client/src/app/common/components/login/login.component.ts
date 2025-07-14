@@ -13,7 +13,7 @@ import { BaseComponent } from '../base.component';
   standalone: true,
   selector: 'app-login',
   templateUrl: './login.component.html',
-  imports: [RouterModule, ReactiveFormsModule, AsyncButtonDirective],
+  imports: [RouterModule, ReactiveFormsModule],
 })
 export class LoginComponent extends BaseComponent implements OnInit {
   private authService = inject(AuthService);

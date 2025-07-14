@@ -8,7 +8,6 @@ import { productsApiEvents } from "./product.events";
 import { ProductService } from "../product.service";
 import { IProduct } from "../product.model";
 import { productEditPageEvents, productListPageEvents } from "./product.events";
-import { IPagedResult } from "@loomcore/common/models";
 
 export function withProductsEffects() {
   return signalStoreFeature(
@@ -22,17 +21,13 @@ export function withProductsEffects() {
         events = inject(Events),
         productService = inject(ProductService),
       ) => ({
-        loadProducts$: events
+        loadAllProducts$: events
           .on(productListPageEvents.opened, productListPageEvents.refreshed)
           .pipe(
             exhaustMap(() =>
-              productService.get().pipe(
-                mapResponse({
-                  next: (pagedResult: IPagedResult<IProduct>) => productsApiEvents.loadProductsSuccess(pagedResult),
-                  error: (error: { message: string }) =>
-                    productsApiEvents.loadProductsFailure(error.message),
-                }),
-              ),
+              productService.getAllAsPromise()
+                .then((products: IProduct[]) => productsApiEvents.loadAllProductsSuccess(products))
+                .catch((error) => productsApiEvents.loadProductsFailure(error.message))
             ),
           ),
         createProduct$: events
@@ -54,11 +49,11 @@ export function withProductsEffects() {
               ),
           ),
         deleteProduct$: events
-          .on(productEditPageEvents.deleteButtonClicked)
+          .on(productEditPageEvents.deleteButtonClicked, productListPageEvents.deleteButtonClicked)
           .pipe(
             exhaustMap(({ payload }) =>
               productService.deleteAsPromise(payload)
-                .then((deleteResult) => productsApiEvents.deleteProductSuccess("deleted")) // todo: fix this once we figure out what is coming back
+                .then((deleteResult) => productsApiEvents.deleteProductSuccess(payload))
                 .catch((error) => productsApiEvents.deleteProductFailure(error.message))
               ),
           ),

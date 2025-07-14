@@ -5,7 +5,7 @@ import { catchError, map } from 'rxjs/operators';
 import { HttpParams } from '@angular/common/http';
 import {AppSettings} from '@common/models/app-settings.model';
 import {ApiResponse} from '@common/models/api-response.type';
-import {IPagedResult} from '@loomcore/common/models';
+import {IPagedResult, IQueryOptions} from '@loomcore/common/models';
 
 @Injectable()
 export abstract class GenericApiService<TData> {
@@ -17,28 +17,29 @@ export abstract class GenericApiService<TData> {
     this.baseUrl =  `${this.config.apiUrl}/${resourceName}`;
   }
 
-  getAll(params?: Record<string, any>): Observable<TData[]> {
-    return this.http.get<ApiResponse<TData[]>>(`${this.baseUrl}/all`, params)
+  getAll(): Observable<TData[]> {
+    return this.http.get<ApiResponse<TData[]>>(`${this.baseUrl}/all`)
       .pipe(
         map((response) => this.extractDataList(response)),
         catchError((error) => this.handleError(error))
       );
   }
 
-  getAllAsPromise(params?: Record<string, any>): Promise<TData[]> {
-    return firstValueFrom(this.getAll(params));
+  getAllAsPromise(): Promise<TData[]> {
+    return firstValueFrom(this.getAll());
   }
 
-  get(params?: Record<string, any>): Observable<IPagedResult<TData>> {
-    return this.http.get<ApiResponse<IPagedResult<TData>>>(`${this.baseUrl}`, params)
+  get(queryOptions?: IQueryOptions): Observable<IPagedResult<TData>> {
+    const httpOptions = queryOptions ? { params: this.convertQueryOptionsToHttpParams(queryOptions) } : {};
+    return this.http.get<ApiResponse<IPagedResult<TData>>>(`${this.baseUrl}`, httpOptions)
       .pipe(
         map((response) => this.extractPagedResult(response)),
         catchError((error) => this.handleError(error))
       );
   }
 
-  getAsPromise(params?: Record<string, any>): Promise<IPagedResult<TData>> {
-    return firstValueFrom(this.get(params));
+  getAsPromise(queryOptions?: IQueryOptions): Promise<IPagedResult<TData>> {
+    return firstValueFrom(this.get(queryOptions));
   }
 
   getById(id: number | string): Observable<TData> {
@@ -198,6 +199,51 @@ export abstract class GenericApiService<TData> {
   protected handleError(error: any): Observable<never> {
     // Basic error handling - can be enhanced in subclasses
     return observableThrowError(() => error);
+  }
+
+  /**
+   * Converts IQueryOptions to HttpParams for query strings
+   * Handles the nested filters structure properly
+   */
+  protected convertQueryOptionsToHttpParams(queryOptions: IQueryOptions): HttpParams {
+    let httpParams = new HttpParams();
+
+    // Handle simple properties
+    if (queryOptions.orderBy !== undefined && queryOptions.orderBy !== null) {
+      httpParams = httpParams.append('orderBy', queryOptions.orderBy);
+    }
+
+    if (queryOptions.sortDirection !== undefined && queryOptions.sortDirection !== null) {
+      httpParams = httpParams.append('sortDirection', queryOptions.sortDirection.toString());
+    }
+
+    if (queryOptions.page !== undefined && queryOptions.page !== null) {
+      httpParams = httpParams.append('page', queryOptions.page.toString());
+    }
+
+    if (queryOptions.pageSize !== undefined && queryOptions.pageSize !== null) {
+      httpParams = httpParams.append('pageSize', queryOptions.pageSize.toString());
+    }
+
+    // Handle filters object
+    if (queryOptions.filters) {
+      for (const [fieldName, filter] of Object.entries(queryOptions.filters)) {
+        for (const [filterType, filterValue] of Object.entries(filter)) {
+          if (filterValue !== undefined && filterValue !== null) {
+            const paramName = `filters[${fieldName}][${filterType}]`;
+            if (Array.isArray(filterValue)) {
+              // Handle array values (e.g., in, any, all)
+              httpParams = httpParams.append(paramName, filterValue.join(','));
+            } else {
+              // Handle single values
+              httpParams = httpParams.append(paramName, filterValue.toString());
+            }
+          }
+        }
+      }
+    }
+
+    return httpParams;
   }
 
   /**

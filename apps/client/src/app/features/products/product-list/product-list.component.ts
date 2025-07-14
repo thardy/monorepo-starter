@@ -7,7 +7,6 @@ import {BaseComponent} from '@common/components/base.component';
 import {ProductsStore} from '@features/products/data/products.store';
 //import {AppStore} from '@app/store/app.store';
 import {ProductEditComponent} from '@features/products/product-edit/product-edit.component';
-import {AsyncButtonDirective} from '@common/directives';
 import {IProduct} from '@features/products/product.model';
 import {EntityId} from '@ngrx/signals/entities';
 import { productListPageEvents } from '../data/product.events';
@@ -17,7 +16,7 @@ import { injectDispatch } from '@ngrx/signals/events';
   standalone: true,
   selector: 'product-list',
   templateUrl: './product-list.component.html',
-  imports: [RouterModule, AsyncButtonDirective, ProductEditComponent],
+  imports: [RouterModule, ProductEditComponent],
   providers: [ProductsStore]
 })
 export class ProductListComponent extends BaseComponent {
@@ -27,11 +26,11 @@ export class ProductListComponent extends BaseComponent {
   // private appStore = inject(AppStore);
   // user = this.appStore.user;
   products = this.productsStore.productEntities;
-  loaded = this.productsStore.isFulfilled;
-  loading = this.productsStore.isPending;
-  // itemDeleting = this.productStore.itemDeleting;
-  // itemDeleted = this.productStore.itemDeleted;
-  // deleting = this.productsStore.deleting;
+  loaded = this.productsStore.loaded;
+  loading = this.productsStore.loading;
+  
+  // Use regular pagination that trusts database total
+  pagination = this.productsStore.pagination;
 
   productUx = new Map<EntityId, { deleting: boolean }>();
   editing = false;
@@ -53,10 +52,14 @@ export class ProductListComponent extends BaseComponent {
     //   this.memberUx.set(this.itemDeleted(), { deleting: false }); // itemDeleting is the id of the item that was just deleted
     // });
 
+    effect(() => {
+      const pagination = this.pagination();
+      console.log(`Pagination - Total: ${pagination.total}, Page: ${pagination.page}, Page Size: ${pagination.pageSize}`); // AI-generated diagnostic
+    });
 
     effect(() => {
       const products = this.products() as IProduct[];
-      console.log(`products changed and we now have ${products.length} total products!!!`);
+      console.log(`products changed and we now have ${products.length} products in current page (total: ${this.pagination().total})!!!`); // AI-generated diagnostic
     });
 
     effect(() => {
@@ -72,27 +75,19 @@ export class ProductListComponent extends BaseComponent {
     this.dispatch.opened();
   }
 
-  // ngOnInit() {
-  //   // this page currently refreshes the products every time this component is opened. You can handle that however you like - you could
-  //   //  check what is currently in the store first and maybe have a refresh button on the page to force a reload.
-  //   this.productsStore.loadAll();
-  // }
-
   onEdit(product: IProduct) {
     this.selectedProduct = product;
     this.editing = true;
+    this.adding = false;
   }
 
   onAdd() {
     this.selectedProduct = null;
     this.adding = true;
+    this.editing = false;
   }
 
   onDelete(product: IProduct) {
-    // don't allow any other deletions if we are currently deleting something
-    // if (this.deleting) {
-    //   return;
-    // }
     this.dispatch.deleteButtonClicked(product._id);
   }
 

@@ -28,13 +28,9 @@ export class ProductEditComponent extends BaseComponent {
   mode = input.required<'create' | 'update'>();
   @Output() formClosed = new EventEmitter();
   form: FormGroup;
-  saving = this.productsStore.isPending;
-  saveButtonClicked = false;
-
-  // Computed signal for read-only derived value
-  private shouldCloseForm = computed(() => {
-    return this.saveButtonClicked && this.saving() === false;
-  });
+  saving = this.productsStore.saving;
+  
+  private previousSaving = false;
   
   constructor(private fb: FormBuilder) {
     super();
@@ -49,11 +45,18 @@ export class ProductEditComponent extends BaseComponent {
 
     this.form = this.fb.group(formControls);
 
-    // Reactive form closing - clean and simple!
+    // Simple form closing - when saving goes from true to false, close the form
     effect(() => {
-      if (this.shouldCloseForm()) {
-        this.formClosed.emit(); // we are done saving - close this form
+      const currentSaving = this.saving();
+      console.log(`previousSaving = ${this.previousSaving} currentSaving = ${currentSaving}`); // todo: delete me
+      
+      if (this.previousSaving && !currentSaving) {
+        console.log('about to emitformClosed'); // todo: delete me
+        // Saving just completed
+        this.formClosed.emit();
       }
+      
+      this.previousSaving = currentSaving;
     });
 
     effect(() => {
@@ -63,7 +66,6 @@ export class ProductEditComponent extends BaseComponent {
       } else {
         this.form.reset();
       }
-      console.log('the selectedProduct changed');
     });
   }
 
@@ -72,7 +74,6 @@ export class ProductEditComponent extends BaseComponent {
   }
 
   onSave() {
-    this.saveButtonClicked = true;
     const formValue = this.form.value;
     const product: IProduct = {
       ...(this.product() || {}),

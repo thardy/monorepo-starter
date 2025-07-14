@@ -10,6 +10,12 @@ export class AuthTokenCacheService {
   ) {}
 
   async cacheTokens(tokens: ITokenResponse): Promise<ITokenResponse> {
+    // Ensure expiresOn is set if not provided
+    if (!tokens.expiresOn && tokens.accessToken) {
+      // Default to 1 hour from now (3600 seconds * 1000 ms)
+      tokens.expiresOn = Date.now() + (3600 * 1000);
+    }
+
     // async/await version
     await this.clearCachedTokens();
     await this.idbService.deleteAll(IdbStoreNames.tokenCache);

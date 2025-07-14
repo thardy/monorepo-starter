@@ -396,17 +396,25 @@ export class AuthService {
            * milliseconds since Jan 1, 1970 UTC
            */
           const expiresOn = tokenResponse.expiresOn;
-          const isLive = expiresOn > now;
+
+          // Only check expiration if expiresOn is set, otherwise assume token is live
+          const isLive = expiresOn ? expiresOn > now : true;
           if (isLive) {
             accessToken = tokenResponse.accessToken;
           }
         }
 
-        /**
-         * If we don't have a live token, try to get one using our refreshToken
-         */
-        console.log('calling acquireTokenSilent from getAccessToken()'); // todo: delete me
-        return accessToken ? Promise.resolve(accessToken) : this.acquireTokenSilent();
+        // If we don't have a live token, try to get one using our refreshToken
+        let result;
+        if (!accessToken) {
+          console.log('calling acquireTokenSilent from getAccessToken()');
+          result = this.acquireTokenSilent();
+        } 
+        else {
+          result = Promise.resolve(accessToken);
+        }
+
+        return result;
       });
   }
 

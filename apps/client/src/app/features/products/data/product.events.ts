@@ -26,7 +26,7 @@ export const productEditPageEvents = eventGroup({
 export const productsApiEvents = eventGroup({
   source: 'Products API',
   events: {
-    loadProductsSuccess: type<IPagedResult<IProduct>>(),
+    loadAllProductsSuccess: type<IProduct[]>(),
     loadProductsFailure: type<string>(),
     createProductSuccess: type<IProduct>(),
     createProductFailure: type<string>(),

@@ -8,6 +8,7 @@ import { forRoot, provideConfig } from '@ng-common/config/provider';
 import { AppSettings } from '@common/models/app-settings.model';
 import { provideAuth } from '@ng-common/auth/provider';
 import { provideProducts } from '@features/products/provider';
+import { provideMembers } from '@features/members/provider';
 import { provideIndexedDb } from '@ng-common/indexed-db/provider';
 import { delayInterceptor } from '@app/common/interceptors/delay.interceptor';
 
@@ -23,5 +24,6 @@ export const appConfig: ApplicationConfig = {
     provideAuth(),
     provideIndexedDb(),
     provideProducts('products'),
+    provideMembers('members'),
   ]
 };

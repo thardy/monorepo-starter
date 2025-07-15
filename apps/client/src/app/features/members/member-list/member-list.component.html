@@ -1,0 +1,23 @@
+<h1>Members</h1>
+@if (loading()) {
+  <div>Loading members...</div>
+} @else {
+  @if (loaded()) {
+    @if (members().length > 0) {
+      <ul>
+        @for (member of members(); track member.id) {
+          <li>
+            {{ member.firstName }} {{ member.lastName }}
+            <span>({{ member.birthdate }})</span>
+            @if (member.gender) {
+              <span>- {{ member.gender }}</span>
+            }
+            <button (click)="onDelete(member)">Delete</button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p>No members found.</p>
+    }
+  }
+} 

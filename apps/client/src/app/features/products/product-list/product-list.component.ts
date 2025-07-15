@@ -29,9 +29,6 @@ export class ProductListComponent extends BaseComponent {
   products = this.productsStore.productEntities;
   loaded = this.productsStore.loaded;
   loading = this.productsStore.loading;
-  
-  // Use regular pagination that trusts database total
-  pagination = this.productsStore.pagination;
 
   productUx = new Map<EntityId, { deleting: boolean }>();
   editing = false;
@@ -77,13 +74,5 @@ export class ProductListComponent extends BaseComponent {
     this.editing = false;
     this.adding = false;
   }
-
-  initUxProperties(products: IProduct[]) {
-    // add a ux properties object for each product
-    if (products && products.length > 0) {
-      products.forEach((product) => {
-        this.productUx.set(product._id, {deleting: false});
-      });
-    }
-  }
+  
 }

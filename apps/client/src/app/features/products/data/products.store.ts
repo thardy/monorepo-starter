@@ -21,7 +21,7 @@ export const ProductsStore = signalStore(
   { providedIn: 'root' },
   withEntities(productConfig),
   withRequestStatus(),
-  withPagination(3),
+  withPagination(3), // not used yet, but needed for the common crud features
   withProductsReducer(),
   withProductsEffects(),
   withDevtools('ProductsStore')

@@ -7,7 +7,7 @@ import {AsyncButtonDirective, AutofocusDirective} from '@common/directives';
 import {ProductService} from '../product.service';
 import {IProduct} from '../product.model';
 import {ProductsStore} from '../data/products.store';
-import { productEditPageEvents } from '../data/product.events';
+import { editPageEvents } from '../data/product.events';
 import { injectDispatch } from '@ngrx/signals/events';
 
 @Component({
@@ -22,7 +22,7 @@ import { injectDispatch } from '@ngrx/signals/events';
 })
 export class ProductEditComponent extends BaseComponent {
   productsStore = inject(ProductsStore);
-  readonly dispatch = injectDispatch(productEditPageEvents);
+  readonly dispatch = injectDispatch(editPageEvents);
 
   product = input<IProduct | null>(null);
   mode = input.required<'create' | 'update'>();

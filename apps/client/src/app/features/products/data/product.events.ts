@@ -1,38 +1,15 @@
-import { type } from '@ngrx/signals';
-import { eventGroup } from '@ngrx/signals/events';
+import { createCrudEvents } from '@ng-common/data/crud-events.factory';
 import { IProduct } from '../product.model';
-import { IPagedResult } from '@loomcore/common/models';
 
-export const productListPageEvents = eventGroup({
-  source: 'ProductList Page',
-  events: {
-    opened: type<void>(),
-    refreshed: type<void>(),
-    deleteButtonClicked: type<string>(),
-  },
-});
+export const productEvents = createCrudEvents<IProduct>('Product');
 
-export const productEditPageEvents = eventGroup({
-  source: 'ProductEdit Page',
-  events: {
-    opened: type<void>(),
-    refreshed: type<void>(),
-    createButtonClicked: type<IProduct>(),
-    updateButtonClicked: type<IProduct>(),
-    deleteButtonClicked: type<string>(),
-  },
-});
+// Also export individual groups for convenience if needed
+export const { listPageEvents, editPageEvents, apiEvents } = productEvents;
 
-export const productsApiEvents = eventGroup({
-  source: 'Products API',
-  events: {
-    loadAllProductsSuccess: type<IProduct[]>(),
-    loadProductsFailure: type<string>(),
-    createProductSuccess: type<IProduct>(),
-    createProductFailure: type<string>(),
-    updateProductSuccess: type<IProduct>(),
-    updateProductFailure: type<string>(),
-    deleteProductSuccess: type<string>(),
-    deleteProductFailure: type<string>(),
-  },
-});
+// This gives us:
+// - productEvents.listPageEvents.opened, productEvents.listPageEvents.refreshed, etc.
+// - productEvents.editPageEvents.createButtonClicked, productEvents.editPageEvents.updateButtonClicked, etc.
+// - productEvents.apiEvents.loadAllSuccess, productEvents.apiEvents.createSuccess, etc.
+//
+// For any new entity, it's just one line:
+// export const entityEvents = createCrudEvents<IEntity>('EntityName');

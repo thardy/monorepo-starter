@@ -7,7 +7,6 @@ import { exhaustMap, switchMap, tap } from "rxjs/operators";
 import { appComponentEvents, authApiEvents, headerComponentEvents } from "./auth.events";
 import { AuthService } from "../services/auth.service";
 import { IUserContext } from "@loomcore/common/models";
-import { productEditPageEvents } from "@app/features/products/data/product.events";
 
 export function withAuthEffects() {
   return signalStoreFeature(

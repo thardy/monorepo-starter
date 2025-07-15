@@ -9,7 +9,7 @@ import {ProductsStore} from '@features/products/data/products.store';
 import {ProductEditComponent} from '@features/products/product-edit/product-edit.component';
 import {IProduct} from '@features/products/product.model';
 import {EntityId} from '@ngrx/signals/entities';
-import { productListPageEvents } from '../data/product.events';
+import { listPageEvents } from '../data/product.events';
 import { injectDispatch } from '@ngrx/signals/events';
 import { AsyncButtonDirective } from '@common/directives/async-button.directive';
 
@@ -22,7 +22,7 @@ import { AsyncButtonDirective } from '@common/directives/async-button.directive'
 })
 export class ProductListComponent extends BaseComponent {
   private productsStore = inject(ProductsStore);
-  readonly dispatch = injectDispatch(productListPageEvents);
+  readonly dispatch = injectDispatch(listPageEvents);
   
   // private appStore = inject(AppStore);
   // user = this.appStore.user;
@@ -41,32 +41,6 @@ export class ProductListComponent extends BaseComponent {
 
   constructor() {
     super();
-
-    // effect(() => {
-    //   this.deleting = true;
-    //   this.memberUx.set(this.itemDeleting(), { deleting: true }); // itemDeleting is the id of the item that is currently being deleted
-    //   // todo: implement and test the above. If it works and I like it, consider using the same mechanism for saving in the edit component.
-    // });
-    //
-    // effect(() => {
-    //   this.deleting = false;
-    //   this.memberUx.set(this.itemDeleted(), { deleting: false }); // itemDeleting is the id of the item that was just deleted
-    // });
-
-    effect(() => {
-      const pagination = this.pagination();
-      console.log(`Pagination - Total: ${pagination.total}, Page: ${pagination.page}, Page Size: ${pagination.pageSize}`); // AI-generated diagnostic
-    });
-
-    effect(() => {
-      const products = this.products() as IProduct[];
-      console.log(`products changed and we now have ${products.length} products in current page (total: ${this.pagination().total})!!!`); // AI-generated diagnostic
-    });
-
-    effect(() => {
-      const loaded = this.loaded();
-      console.log(`loaded = ${loaded}`);
-    });
 
     // effect(() => {
     //   const currentUser = this.user();

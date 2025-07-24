@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sync-applied-changes-cron-job
+spec:
+  schedule: "30 6 * * *"       # Run at 1:30am central every day = 6:00 UTC (CDT will be 6, CST will be 7)
+  concurrencyPolicy: Allow
+  startingDeadlineSeconds: 60
+  suspend: false
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: sync-applied-changes-cron-job
+              image: curlimages/curl
+              command: [ "curl", "-s", "http://risk-answers-api-internal-svc.default.svc.cluster.local:8083/api/jobs/sync-applied-changes" ]
+          restartPolicy: OnFailure

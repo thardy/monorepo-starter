@@ -63,8 +63,13 @@ export function withCrudEffects<T>(config: CrudEffectsConfig<T>) {
 
         if (config.enableErrorLogging !== false) {
           effects.logError$ = events
-            .on(config.events.apiEvents.loadAllFailure)
-            .pipe(tap(({ payload }) => console.log(payload))); // AI-generated diagnostic
+            .on(
+              config.events.apiEvents.loadAllFailure,
+              config.events.apiEvents.deleteFailure,
+              config.events.apiEvents.createFailure,
+              config.events.apiEvents.updateFailure,
+            )
+            .pipe(tap(({ payload }) => console.log(payload))); // todo: replace with decent logging
         }
 
         return effects;

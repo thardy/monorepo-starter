@@ -16,11 +16,16 @@ RUN turbo prune @monorepo-starter/api --docker --out-dir ./out/api
 
 
 # Add pruned lockfile and package.json's of isolated subworkspace
+FROM base as lockfile-generator
+WORKDIR /app
+COPY --from=pruner /app/out/api/json/ .
+RUN npm install --package-lock-only
+
 FROM base AS installer
 WORKDIR /app
-# Copy over the pruned package.json files and lockfile
+# Copy over the pruned package.json files and the newly generated lockfile
 COPY --from=pruner /app/out/api/json/ .
-COPY --from=pruner /app/out/api/package-lock.json .
+COPY --from=lockfile-generator /app/package-lock.json .
 COPY --from=pruner /app/tsconfig.base.json .
 COPY --from=pruner /app/nx.json .
 # Copy .env file directly from source

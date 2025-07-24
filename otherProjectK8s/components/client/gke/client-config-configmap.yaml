@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: risk-answers-client-config
+data:
+  config.json: |
+    {
+      "environment": "#{NODE_ENV}",
+      "production": #{CLIENT_PRODUCTION},
+      "debug": #{CLIENT_DEBUG},
+      "log": #{CLIENT_LOG},
+      "deployedBranch": "unknown",
+      
+      "api": {
+        "url": "#{CLIENT_API_URL}",
+        "timeout": #{CLIENT_API_TIMEOUT}
+      },
+      "mapboxKey": "#{CLIENT_MAPBOX_KEY}"
+    }

@@ -1,0 +1,7 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: test-riskanswers-cert
+spec:
+  domains:
+    - test.riskanswers.com

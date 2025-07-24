@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base/shared
+
+components:
+  - ../../components/shared
+
+commonLabels:
+  env: prod
+
+patches:
+  - target:
+      kind: Ingress
+      name: risk-answers-ingress-service
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: riskanswers.com
+      - op: replace
+        path: /metadata/annotations
+        value:
+          kubernetes.io/ingress.class: "gce"
+          kubernetes.io/ingress.global-static-ip-name: "prod-risk-answers-extip"
+          networking.gke.io/managed-certificates: "prod-riskanswers-cert"
+          networking.gke.io/v1beta1.FrontendConfig: "http-to-https"
+      - op: replace
+        path: /spec/rules/0/http/paths/1/backend/service/port/number
+        value: 80 

@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base/api
+
+components:
+  - ../../components/api/gke
+  - ../../components/api/env-vars
+
+commonLabels:
+  env: prod
+
+patches:
+  - target:
+      kind: Deployment
+      name: risk-answers-api-deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/serviceAccountName
+        value: prod-sa 

@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      version: v1
+      kind: Service
+      name: risk-answers-client-svc
+    patch: |-
+      - op: replace
+        path: /spec/ports/0
+        value:
+          name: risk-answers-client-port
+          port: 80
+          targetPort: 80
+
+  - target:
+      version: v1
+      kind: Deployment
+      name: risk-answers-client-deployment
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/ports/0/containerPort
+        value: 80

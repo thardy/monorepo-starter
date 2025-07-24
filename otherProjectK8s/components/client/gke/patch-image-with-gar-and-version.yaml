@@ -1,0 +1,4 @@
+# change the image name to prefix our google artifact registry repo
+- op: replace
+  path: /spec/template/spec/containers/0/image
+  value: us-central1-docker.pkg.dev/tower-street-431621/tower-street-artifacts/meritas-digital/risk-answers-client:#{CLIENT_IMAGE_VERSION} 

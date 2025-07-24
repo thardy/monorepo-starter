@@ -1,0 +1,137 @@
+- op: remove
+  path: /spec/template/spec/containers/0/env/0
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: CLIENT_SECRET
+    value: '#{CLIENT_SECRET}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: CORS_ALLOWED_ORIGINS
+    value: '#{CORS_ALLOWED_ORIGINS}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: DATABASE_NAME
+    value: '#{DATABASE_NAME}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: DEVICEID_MAX_AGE_DAYS
+    value: '#{DEVICEID_MAX_AGE_DAYS}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: HOST_NAME
+    value: '#{HOST_NAME}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: JWT_EXPIRATION_SECONDS
+    value: '#{JWT_EXPIRATION_SECONDS}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: NODE_ENV
+    value: '#{NODE_ENV}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: MONGODB_URL # consider returning the three vars below and combining them in the app (including urlEncoding the username and password)
+    value: 'mongodb://#{MONGODB_API_USERNAME}:#{MONGODB_API_PASSWORD}@#{MONGODB_SERVICE_NAME}:27017'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: REFRESH_EXPIRATION_DAYS
+    value: '#{REFRESH_EXPIRATION_DAYS}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: SALT_WORK_FACTOR
+    value: '#{SALT_WORK_FACTOR}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: APPLIED_API_URL
+    value: '#{APPLIED_API_URL}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: APPLIED_API_CLIENT_ID
+    value: '#{APPLIED_API_CLIENT_ID}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: APPLIED_API_CLIENT_SECRET
+    value: '#{APPLIED_API_CLIENT_SECRET}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: GEOCODING_API_KEY
+    value: '#{GEOCODING_API_KEY}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: WEATHER_API_ALERTS_URL
+    value: '#{WEATHER_API_ALERTS_URL}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: WEATHER_API_USER_AGENT
+    value: '#{WEATHER_API_USER_AGENT}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: RISK_ANSWERS_API_EXTERNAL_PORT
+    value: '#{RISK_ANSWERS_API_EXTERNAL_PORT}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: RISK_ANSWERS_API_INTERNAL_PORT
+    value: '#{RISK_ANSWERS_API_INTERNAL_PORT}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: WEATHER_API_HAIL_URL
+    value: '#{WEATHER_API_HAIL_URL}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: WEATHER_API_HAIL_API_KEY
+    value: '#{WEATHER_API_HAIL_API_KEY}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: HAIL_MAP_MAX_AGE_DAYS
+    value: '#{HAIL_MAP_MAX_AGE_DAYS}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: EMAIL_SENDGRID_API_KEY
+    value: '#{EMAIL_SENDGRID_API_KEY}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: EMAIL_FROM_ADDRESS
+    value: '#{EMAIL_FROM_ADDRESS}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES
+    value: '#{PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: BIG_QUERY_PROJECT
+    value: '#{BIG_QUERY_PROJECT}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: BIG_QUERY_DATASET
+    value: '#{BIG_QUERY_DATASET}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: BIG_QUERY_LOCATION
+    value: '#{BIG_QUERY_LOCATION}' 

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-answers-api-svc
+  labels:
+    app: risk-answers-api
+spec:
+  type: ClusterIP
+  selector:
+    app: risk-answers-api
+  ports:
+    - name: risk-answers-api-port
+      protocol: TCP
+      port: 4000 # the external facing port of the Service
+      targetPort: 4000 # where traffic will be directed inside the pod - where the application is listening
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-answers-api-internal-svc
+  namespace: default
+  labels:
+    app: risk-answers-api
+spec:
+  type: ClusterIP
+  selector:
+    app: risk-answers-api
+  ports:
+    - name: risk-answers-api-internal-port
+      protocol: TCP
+      port: 8083
+      targetPort: 8083 

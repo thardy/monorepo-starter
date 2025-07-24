@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: risk-answers-ingress-service
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+spec:
+  rules:
+    - host: riskanswers.local # kustomize will replace this value with the value specified in the <env>/kustomization.yaml file
+      http:
+        paths:
+          - path: /api # any path beginning with '/api' will get routed to the risk-answers-api-svc:4000
+            pathType: Prefix
+            backend:
+              service:
+                name: risk-answers-api-svc
+                port:
+                  number: 4000
+          - path: / # anything hitting the root of riskanswers.local '/' will get routed to risk-answers-client-svc:4000
+            pathType: Prefix
+            backend:
+              service:
+                name: risk-answers-client-svc
+                port:
+                  number: 4000
+

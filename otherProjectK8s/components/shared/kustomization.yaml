@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # MongoDB patches
+  - target:
+      group: apps
+      version: v1
+      kind: StatefulSet
+      name: risk-answers-mongodb
+    path: patch-add-mongodb-env-vars.yaml
+  - target:
+      version: v1
+      kind: ConfigMap
+      name: risk-answers-mongo-init-configmap
+    path: patch-replace-mongo-apiUser-configmap.yaml

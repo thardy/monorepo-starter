@@ -1,0 +1,5 @@
+# I believe this ensures the pod is placed on a node with WIF enabled
+- op: add
+  path: /spec/template/spec/nodeSelector
+  value:
+    iam.gke.io/gke-metadata-server-enabled: "true" 

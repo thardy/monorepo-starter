@@ -1,0 +1,11 @@
+# Readiness Probe (https://cloud.google.com/kubernetes-engine/docs/concepts/ingress#def_inf_hc)
+- op: add
+  path: /spec/template/spec/containers/0/readinessProbe
+  value:
+    httpGet:
+      scheme: HTTP
+      path: /api/health
+      port: 4000
+    initialDelaySeconds: 20
+    periodSeconds: 15
+    timeoutSeconds: 5 

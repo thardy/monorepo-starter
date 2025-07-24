@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: risk-answers-mongodb
+spec:
+  serviceName: risk-answers-mongodb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: risk-answers-mongodb
+  template:
+    metadata:
+      labels:
+        app: risk-answers-mongodb
+    spec:
+      containers:
+        - name: risk-answers-mongodb
+          image: mongo
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: "admin"
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: "testadmin"
+            - name: MONGO_INITDB_DATABASE # .js files from the below dir will be executed by mongo using the database specified by MONGO_INITDB_DATABASE
+              value: riskAnswers
+          volumeMounts:
+            - name: risk-answers-mongo-persistent-storage
+              mountPath: /data/db
+            - name: risk-answers-mongo-init-volume
+              mountPath: /docker-entrypoint-initdb.d # when a container is started for the first time (db has not been initialized), it will execute files with
+                                                     #  a .js extension in the /docker-entrypoint-initdb.d directory. Once the db has been initialized, these
+                                                     #  scripts will not be executed again. They won't be executed on subsequent applies of this yaml.
+      volumes:
+        - name: risk-answers-mongo-persistent-storage
+          persistentVolumeClaim:
+            claimName: risk-answers-mongo-pvc
+        - name: risk-answers-mongo-init-volume
+          configMap:
+            name: risk-answers-mongo-init-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-answers-mongodb-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: risk-answers-mongodb
+  ports:
+    - name: db-port
+      protocol: TCP
+      port: 27017
+      targetPort: 27017

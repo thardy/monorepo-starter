@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: risk-answers-mongo-pv
+  labels:
+    type: local
+spec:
+  storageClassName: hostpath
+  persistentVolumeReclaimPolicy: Retain
+  capacity:
+    storage: 200Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/risk-answers-mongo-pv
+

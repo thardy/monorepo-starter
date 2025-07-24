@@ -1,0 +1,9 @@
+- op: replace
+  path: /data/mongo-create-api-user.js
+  value: |
+      db.createUser({
+        user: process.env.MONGO_API_USERNAME,
+        pwd: process.env.MONGO_API_PASSWORD,
+        roles: [ { role: "readWrite", db: "riskAnswers" } ]
+      });
+

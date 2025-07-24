@@ -1,0 +1,9 @@
+# I think this is shared with ts-endorsement-catalog, so it's probably already applied on the preprod cluster
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: http-to-https
+spec:
+  redirectToHttps:
+    enabled: true
+    responseCodeName: MOVED_PERMANENTLY_DEFAULT

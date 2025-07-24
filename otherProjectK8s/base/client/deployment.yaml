@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-answers-client-deployment
+  labels:
+    app: risk-answers-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: risk-answers-client
+  template:
+    metadata:
+      labels:
+        app: risk-answers-client
+    spec:
+      containers:
+        - name: risk-answers-client
+          # this is what we use locally with skaffold - we don't use versions in the base because this image is never published anywhere.
+          image: meritas-digital/risk-answers-client
+          env: [ ]
+          ports:
+            - containerPort: 5173 

@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hail-map-get-cron-job
+spec:
+  schedule: "30 12 * * *"       # Run at 7:30am central every day = 12:30 UTC (CDT will be 12, CST will be 13)
+  concurrencyPolicy: Allow
+  startingDeadlineSeconds: 60
+  suspend: false
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: hail-maps-cron-job
+              image: curlimages/curl
+              command: [ "curl", "-s", "http://risk-answers-api-internal-svc.default.svc.cluster.local:8083/api/jobs/get-yesterdays-hail-map" ]
+          restartPolicy: OnFailure
+

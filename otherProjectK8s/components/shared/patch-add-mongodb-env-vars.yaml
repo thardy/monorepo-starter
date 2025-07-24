@@ -1,0 +1,20 @@
+- op: replace
+  path: /spec/template/spec/containers/0/env/0
+  value:
+    name: MONGO_INITDB_ROOT_USERNAME
+    value: '#{MONGODB_ADMIN_USERNAME}'
+- op: replace
+  path: /spec/template/spec/containers/0/env/1
+  value:
+    name: MONGO_INITDB_ROOT_PASSWORD
+    value: '#{MONGODB_ADMIN_PASSWORD}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: MONGO_API_USERNAME
+    value: '#{MONGODB_API_USERNAME}'
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: MONGO_API_PASSWORD
+    value: '#{MONGODB_API_PASSWORD}'

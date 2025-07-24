@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-answers-client-svc
+  labels:
+    app: risk-answers-client
+spec:
+  selector:
+    app: risk-answers-client
+  ports:
+    - name: risk-answers-client-port
+      protocol: TCP
+      port: 4000
+      targetPort: 5173 

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-answers-api-deployment
+  labels:
+    app: risk-answers-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: risk-answers-api
+  template:
+    metadata:
+      labels:
+        app: risk-answers-api
+    spec:
+      initContainers:
+        - name: init-db
+          image: busybox:1.31
+          command: [ 'sh', '-c', 'echo -e "Checking for the availability of MongoDB Server deployment"; while ! nc -z risk-answers-mongodb-svc 27017; do sleep 1; printf "-"; done; echo -e "  >> MongoDB Server has started";' ]
+      containers:
+        - name: risk-answers-api
+          # this is what we use locally with skaffold - we don't use versions in the base because this image is never published anywhere.
+          image: meritas-digital/risk-answers-api
+          env:
+            # local-only - this is removed in every other environment via kustomize. We use WIF inside GKE.
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: './gcp-creds-risk-answers.json' # do not allow into source control - .gitignore contains "gcp-creds-*.json"
+          ports:
+            - containerPort: 4000 # External port. Without this, no health check is created from the readiness probe in gke, and it doesn't change the behavior locally
+            - containerPort: 8083 # Internal port. 

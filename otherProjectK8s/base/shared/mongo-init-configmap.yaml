@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: risk-answers-mongo-init-configmap
+data:
+  mongo-create-api-user.js: |
+    db.createUser({
+      user: "apiUser",
+      pwd: "testuser",
+      roles: [{ role: "readWrite", db: "riskAnswers" }]
+    });
+  mongo-init.js: |
+    // mongo-init.js
+    //
+    //
+    // ***** appliedChangeRecords ****************************************
+    db.createCollection('appliedChangeRecords', {});
+    db.appliedChangeRecords.createIndex({ "orgId": 1 });
+    
+    // ***** clients ****************************************
+    db.createCollection('clients', {});
+    db.clients.createIndex({ "orgId": 1, "_id": 1 }); // _id is already guaranteed to be unique, so no need for this compound index to be unique
+    db.clients.createIndex({ "orgId": 1 });
+    db.clients.createIndex({ "uniqEntity": 1 }, { unique: true });
+
+    // ***** dataProcesses ****************************************
+    db.createCollection('dataProcesses', {});
+    // Case-insensitive index
+    db.dataProcesses.createIndex({ "orgId": 1, "dataProcessType": 1 }, { unique: true, collation: { locale: 'en', strength: 1 }});
+
+    // ***** gapAnalyses ****************************************
+    db.createCollection('gapAnalyses', {});
+    db.gapAnalyses.createIndex({ "orgId": 1, "_id": 1 });
+    db.gapAnalyses.createIndex({ "orgId": 1 });
+
+    // ***** gapAnalysisAnswers ****************************************
+    db.createCollection('gapAnalysisAnswers', {});
+    db.gapAnalysisAnswers.createIndex({ "orgId": 1, "_id": 1 });
+    db.gapAnalysisAnswers.createIndex({ "orgId": 1, "gapAnalysisId": 1 });
+
+    // ***** gapAnalysisCategories ****************************************
+    db.createCollection('gapAnalysisCategories', {});
+    db.gapAnalysisCategories.createIndex({ "orgId": 1, "_id": 1 });
+    db.gapAnalysisCategories.createIndex({ "orgId": 1 });
+
+    // ***** gapAnalysisQuestions ****************************************
+    db.createCollection('gapAnalysisQuestions', {});
+    db.gapAnalysisQuestions.createIndex({ "orgId": 1, "_id": 1 });
+    db.gapAnalysisQuestions.createIndex({ "orgId": 1 });
+
+    // ***** hailMaps ****************************************
+    db.createCollection('hailMaps', {});
+    db.hailMaps.createIndex({ "orgId": 1, "_id": 1 });
+    db.hailMaps.createIndex({ "orgId": 1, "date": 1 }, { unique: true });
+
+    // ***** organizations ****************************************
+    db.createCollection('organizations', {});
+    // Case-insensitive indexes
+    db.organizations.createIndex({ "name": 1 }, { unique: true, collation: { locale: 'en', strength: 1 }});
+    db.organizations.createIndex({ "code": 1 }, { unique: true, collation: { locale: 'en', strength: 1 }});
+
+
+    // ***** passwordResetTokens ****************************************
+    db.createCollection('passwordResetTokens', {});
+    db.passwordResetTokens.createIndex({ "email": 1 }, { unique: true });
+
+
+    // ***** policies ****************************************
+    db.createCollection('policies', {});
+    db.policies.createIndex({ "orgId": 1, "_id": 1 });
+    db.policies.createIndex({ "orgId": 1, "clientId": 1 });
+
+
+    // ***** properties ****************************************
+    db.createCollection('properties', {});
+    db.properties.createIndex({ "orgId": 1, "_id": 1 });
+    db.properties.createIndex({ "orgId": 1, "clientId": 1 });
+
+
+    // ***** refreshTokens ****************************************
+    db.createCollection('refreshTokens', {});
+    db.refreshTokens.createIndex({ "token": 1, "deviceId": 1 });
+
+
+    // ***** riskScores ****************************************
+    db.createCollection('riskScores', {});
+    db.riskScores.createIndex({ "orgId": 1, "_id": 1 });
+    db.riskScores.createIndex({ "orgId": 1, "clientId": 1 });
+    db.riskScores.createIndex({ "orgId": 1, "gapAnalysisId": 1 });
+
+    
+    // ***** users ****************************************
+    db.createCollection('users', {});
+    db.users.createIndex({ "orgId": 1 });
+    db.users.createIndex({ "orgId": 1, "_id": 1 });
+    // Case-insensitive index
+    db.users.createIndex({ "email": 1 }, { unique: true, collation: { locale: 'en', strength: 1 }});
+
+
